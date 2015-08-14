@@ -750,6 +750,7 @@
                  get-interactions-text)
         (super-instantiate ())
 
+        #;
         (define/override (file-menu:between-open-and-revert file-menu)
           ;; super adds a separator, add this and another sep after that
           (super file-menu:between-open-and-revert file-menu)
