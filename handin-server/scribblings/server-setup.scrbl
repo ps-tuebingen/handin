@@ -14,7 +14,10 @@ This directory contains the following files and sub-directories:
 @item{@filepath{server-cert.pem}: the server's certificate.  To create a
   certificate and key with openssl:
   @commandline{openssl req -new -newkey rsa:2048 -sha256 -nodes -x509 -days 365
-                 -out server-cert.pem -keyout private-key.pem}}
+                 -out server-cert.pem -keyout private-key.pem}
+  and answer @tt{openssl}'s questions.
+  Especially if you plan to use the status server, make sure to specify
+  as Common Name the DNS name of the host on which you will run the server.}
 
 @item{@filepath{private-key.pem}: the private key to go with
   @filepath{server-cert.pem}.  Whereas @filepath{server-cert.pem} gets
