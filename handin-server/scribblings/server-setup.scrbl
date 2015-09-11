@@ -13,7 +13,7 @@ This directory contains the following files and sub-directories:
 @itemize[
 @item{@filepath{server-cert.pem}: the server's certificate.  To create a
   certificate and key with openssl:
-  @commandline{openssl req -new -nodes -x509 -days 365
+  @commandline{openssl req -new -newkey rsa:2048 -sha256 -nodes -x509 -days 365
                  -out server-cert.pem -keyout private-key.pem}}
 
 @item{@filepath{private-key.pem}: the private key to go with
