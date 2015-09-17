@@ -111,35 +111,39 @@
                                               (not (equal? f "handin.png"))
                                               (file-exists? f)))
                                        (map path->string (directory-list)))
-                               string<?))))])
-    (append
-     (if (pair? l)
-         (cdr (append-map
-               (lambda (f)
-                 (let ([hi (build-path dir f)])
-                   `((br)
-                     (a ([href ,(make-k k (relativize-path hi))]) ,f)
-                     " ("
-                     ,(date->string
-                       (seconds->date (file-or-directory-modify-seconds hi))
-                       #t)
-                     ")")))
-               l))
-         (list (format "No handins accepted so far for user ~s, assignment ~s"
-                       user hi)))
-     (if (and image (file-exists? image))
-         (let ([image-k (make-k k (relativize-path image))])
-           (list `(br)
-                 `(a ([href ,image-k])
-                     (img ([src ,image-k])))))
-         null)
-     (if upload-suffixes
-         (let ([dir (or dir 
-                        (build-path (assignment<->dir hi) user))])
-           (list '(br)
-                 `(a ([href ,(make-k k (relativize-path dir) #:mode "upload")])
-                     "Upload...")))
-         null))))
+                               string<?))))]
+         [handins (append
+
+                    ; links to handins
+                    (if (pair? l)
+                        (map (lambda (f)
+                               (let ([hi (build-path dir f)])
+                                 `(li (a ([href ,(make-k k (relativize-path hi))]) ,f)
+                                   " ("
+                                   ,(date->string
+                                     (seconds->date (file-or-directory-modify-seconds hi))
+                                     (date-display-format 'german))
+                                   ")")))
+                             l)
+                        null)
+                    
+                    ; links to uploaded pictures
+                    (if (and image (file-exists? image))
+                        (let ([image-k (make-k k (relativize-path image))])
+                          (list `(li (a ([href ,image-k])
+                                        (img ([src ,image-k]))))))
+                        null)
+                    
+                    ; links to upload handins now
+                    (if upload-suffixes
+                        (let ([dir (or dir 
+                              (build-path (assignment<->dir hi) user))])
+                          (list `(li (a ([href ,(make-k k (relativize-path dir) #:mode "upload")])
+                               "Upload..."))))
+                        null))])
+    (if (pair? handins)
+        `(ul ,@handins)
+        "Keine Abgabe eingereicht oder akzeptiert.")))
 
 ;; ???
 (define (solution-link k hi)
@@ -180,33 +184,22 @@
 (define (one-status-page user for-handin)
   (let* ([next (send/suspend
                 (lambda (k)
-                  (make-page (format "User: ~a, Handin: ~a" user for-handin)
+                  (make-page (format "Nutzer: ~a, Abgabe: ~a" user for-handin)
                     `(p ,@(handin-link k user for-handin #f))
-                    `(p "Grade: " ,(handin-grade user for-handin))
+                    `(p "Punkte: " ,(handin-grade user for-handin))
                     `(p ,@(solution-link k for-handin))
                     `(p (a ([href ,(make-k k "allofthem")])
-                           ,(format "All handins for ~a" user))))))])
+                           ,(format "Alle Abgaben für ~a" user))))))])
     (handle-status-request user next null)))
 
-;; Display a left-aligned cell in a handin table
-(define (handin-table-cell  . texts)
-  `(td ([bgcolor "white"]) ,@texts))
-
-;; Display a right-aligned cell in a handin table.
-(define (handin-table-rcell . texts)
-  `(td ([bgcolor "white"] [align "right"]) ,@texts))
-
-;; Display an header cell in a handin table.
-(define (handin-table-header . texts)
-  `(td ([bgcolor "#f0f0f0"]) (big (strong ,@texts))))
 
 ;; Displays a row in a table of handins.
 (define (((handin-table-row user) k active? upload-suffixes) dir)
   (let ([hi (assignment<->dir dir)])
-    `(tr ([valign "top"])
-       ,(apply handin-table-header hi (if active? `((br) (small (small "[active]"))) '()))
-       ,(apply handin-table-cell (handin-link k user hi upload-suffixes))
-       ,(handin-table-rcell (handin-grade user hi)))))
+    `(tr ([class ,(if active? "active" "inactive")])
+       (th ([scope "row"]) ,hi)
+       (td ,(handin-link k user hi upload-suffixes))
+       (td ,(handin-grade user hi)))))
 
 ;; Display the status of one user and all handins.
 (define (all-status-page user)
@@ -216,11 +209,11 @@
           (send/suspend
            (lambda (k)
              (make-page
-              (format "All Handins for ~a" user)
-              `(table ([bgcolor "#ddddff"] [cellpadding "6"] [align "center"])
-                 (tr () ,@(map handin-table-header '(nbsp "Files" "Grade")))
-                 ,@(append (map (row k #t upload-suffixes) (get-conf 'active-dirs))
-                           (map (row k #f #f) (get-conf 'inactive-dirs)))))))])
+              (format "Alle Abgaben für ~a" user)
+              `(table ([class "submissions"])
+                 (thead (tr (th "Aufgabenblatt") (th "Abgegebene Dateien") (th "Punkte")))
+                 (tbody ,@(append (map (row k #t upload-suffixes) (get-conf 'active-dirs))
+                           (map (row k #f #f) (get-conf 'inactive-dirs))))))))])
     (handle-status-request user next upload-suffixes)))
 
 ;; Handle file uploading and downloading.
@@ -357,21 +350,22 @@
           (send/suspend
            (lambda (k)
              (make-page
-              "Handin Status Login"
-              `(form ([action ,k] [method "post"])
-                 (table ([align "center"])
-                   (tr (td ([colspan "2"] [align "center"])
-                           (font ([color "red"]) ,(or errmsg 'nbsp))))
-                   (tr (td "Username")
+              "Abgabestatus"
+              `(p "Hier können Sie den Status Ihrer abgegebenen Aufgabenblätter einsehen. Melden Sie sich mit den gleichen Daten an, die Sie auch für das "
+                  (a ([href "https://forum-ps.informatik.uni-tuebingen.de/"]) "Forum") " verwenden.")
+              (if errmsg
+                  `(p ([class "error-msg"]) ,errmsg)
+                  `(p))
+              `(form ([class "status-login"] [action ,k] [method "post"])
+                 (table
+                   (tr (td "Benutzername")
                        (td (input ([type "text"] [name "user"] [size "20"]
                                    [value ""]))))
-                   (tr (td nbsp))
-                   (tr (td "Password")
+                   (tr (td "Passwort")
                        (td (input ([type "password"] [name "passwd"]
-                                   [size "20"] [value ""]))))
-                   (tr (td ([colspan "2"] [align "center"])
-                           (input ([type "submit"] [name "post"]
-                                   [value "Login"])))))))))]
+                                   [size "20"] [value ""])))))
+                 (div ([class "controls"])
+                      (button "Anmelden"))))))]
          [bindings  (request-bindings request)]
          [user      (aget bindings 'user)]
          [passwd    (aget bindings 'passwd)]
@@ -392,7 +386,7 @@
                        [user-pwd (list (car user-data))])
                    (if master-pwd (cons master-pwd user-pwd) user-pwd))))
            (status-page user for-handin)]
-          [else (login-page for-handin "Bad username or password")])))
+          [else (login-page for-handin "Benutzername oder Passwort falsch.")])))
 
 ;; Set up session counter.
 (define web-counter
