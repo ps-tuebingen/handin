@@ -1,6 +1,95 @@
 #lang racket/base
 
-(require "logger.rkt")
+(require racket/file
+         json
+         net/http-client
+         net/uri-codec
+         "logger.rkt"
+         "config.rkt")
+
+;; Acess user data for a user.
+(provide get-user-data)
+(define (get-user-data user)
+  (or (get-user-data/local user)
+      (get-user-data/discourse user)))
+
+(define get-user-data/local
+  (let ([users-file (build-path server-dir "users.rktd")])
+    (unless (file-exists? users-file)
+      (log-line "WARNING: users file missing on startup: ~a" users-file))
+    (lambda (user)
+      (and user (get-preference (string->symbol user) (lambda () #f) 'timestamp
+                                users-file)))))
+
+;; cache results of action for up to cache-timeout-ms milliseconds
+(define (cached cache-timeout-ms action)
+  (let ([cache #f]
+        [last #f])
+    (lambda ()
+      (if (and last (< (- (current-inexact-milliseconds) last) cache-timeout-ms))
+        cache
+        (let ([result (action)])
+          (set! cache result)
+          (set! last (current-inexact-milliseconds))
+          result)))))
+
+;; access discourse configuration
+(define get-conf/discourse
+  (let* ([read-discourse-config-file
+          (lambda ()
+            (let* ([file (get-conf 'discourse-config-file)]
+                   [text (and file (file->string file))]
+                   [result (and text (string->jsexpr text))])
+              result))]
+         [discourse-config
+          (cached 2000.0 read-discourse-config-file)])
+    (lambda (key)
+      (let ([config (discourse-config)])
+        (and config (hash-ref config key))))))
+
+;; send request to discourse
+(define (discourse-req path [post-data #f])
+  (let ([api-username (get-conf/discourse 'api_username)]
+        [api-key (get-conf/discourse 'api_key)])
+    (and api-username api-key
+      (let-values ([(status header port)
+                    (http-sendrecv "forum-ps.informatik.uni-tuebingen.de"
+                                   (format "~a?~a"
+                                     path
+                                     (alist->form-urlencoded `((api_key . ,api-key)
+                                                               (api_username . ,api-username))))
+                                   #:ssl? #t
+                                   #:version "1.1"
+                                   #:method (if post-data "POST" "GET")
+                                   #:data post-data)])
+        (log-line  "DISCOURSE ~a: ~a" path status)
+        (define result (read-json port))
+        (close-input-port port)
+        result))))
+
+;; fetch user database of discourse
+(define get-user-data/discourse
+  (let* ([fetch-data
+          (lambda ()
+            (let* ([response (discourse-req "/admin/course/dump.json")]
+                   [users (and response
+                               (hash-ref response 'success)
+                               (hash-ref response 'users))])
+              (for/hash ([user users])
+                (values (hash-ref user 'username)
+                        (cons (list 'discourse (hash-ref user 'username))
+                              (for/list ([extra-field (get-conf 'extra-fields)])
+                                (hash-ref user (string->symbol (car extra-field)))))))))]
+         [data (cached 2000.0 fetch-data)])
+    (lambda (username)
+      (hash-ref (data) username #f))))
+
+;; authenticate username/password with discourse
+(define (has-password/discourse? username password)
+  (hash-ref (discourse-req "/admin/course/auth.json"
+                       (alist->form-urlencoded `((user . ,username)
+                                                 (password . ,password))))
+            'success))
 
 (define crypt
   (let ([c #f] [sema (make-semaphore 1)])
@@ -27,6 +116,8 @@
                                         (cadr passwd))])
                 (unless salt (bad-password "badly formatted unix password"))
                 (equal? (crypt raw (car salt)) (cadr passwd)))]
+             [(discourse)
+              (has-password/discourse? (cadr passwd) raw)]
              [else (bad-password "bad password type in user database")])]
           [else (bad-password "bad password value in user database")]))
   (or (member md5 passwords) ; very cheap search first
