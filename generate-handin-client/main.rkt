@@ -83,8 +83,8 @@
 
 ; Enable auto-update? & Auto-update relative URL.
 ; Depends on web-address being defined.
-;(define auto-update-address #f)
-(define auto-update-address "handinplugin")
+(define auto-update-relative-url
+  (get-conf 'auto-update-relative-url #f))
 
 ; Name of the course's homepage
 (define web-menu-name
@@ -148,11 +148,11 @@
         (print-info `(define web-menu-name ,web-menu-name))
         (print-info `(define web-address ,web-address))
 
-        (when auto-update-address
+        (when auto-update-relative-url
           ;; Auto-updater section (see handin-server/doc.txt for details)
           (print-info `(define enable-auto-update #t))
-          (print-info `(define version-filename ,(string-append auto-update-address "/" client-name ".version")))
-          (print-info `(define package-filename ,(string-append auto-update-address "/" client-name ".plt")))))
+          (print-info `(define version-filename ,(string-append auto-update-relative-url "/" client-name ".version")))
+          (print-info `(define package-filename ,(string-append auto-update-relative-url "/" client-name ".plt")))))
 
       ; dependencies
       (print-info `(define requires '(("mred") ("openssl")))))))
