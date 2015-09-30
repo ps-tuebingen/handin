@@ -82,7 +82,7 @@
                                 (hash-ref user (string->symbol (car extra-field)))))))))]
          [data (cached 2000.0 fetch-data)])
     (lambda (username)
-      (hash-ref (data) username))))
+      (hash-ref (data) username #f))))
 
 ;; authenticate username/password with discourse
 (define (has-password/discourse? username password)
