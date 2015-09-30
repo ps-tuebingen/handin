@@ -21,12 +21,12 @@
       (and user (get-preference (string->symbol user) (lambda () #f) 'timestamp
                                 users-file)))))
 
-;; cache results of action for up to freq milliseconds
-(define (cached freq action)
+;; cache results of action for up to cache-timeout-ms milliseconds
+(define (cached cache-timeout-ms action)
   (let ([cache #f]
         [last #f])
     (lambda ()
-      (if (and last (< (- (current-inexact-milliseconds) last) freq))
+      (if (and last (< (- (current-inexact-milliseconds) last) cache-timeout-ms))
         cache
         (let ([result (action)])
           (set! cache result)
@@ -48,7 +48,7 @@
         (and config (hash-ref config key))))))
 
 ;; send request to discourse
-(define (discourse path [post-data #f])
+(define (discourse-req path [post-data #f])
   (let ([api-username (get-conf/discourse 'api_username)]
         [api-key (get-conf/discourse 'api_key)])
     (and api-username api-key
@@ -71,7 +71,7 @@
 (define get-user-data/discourse
   (let* ([fetch-data
           (lambda ()
-            (let* ([response (discourse "/admin/course/dump.json")]
+            (let* ([response (discourse-req "/admin/course/dump.json")]
                    [users (and response
                                (hash-ref response 'success)
                                (hash-ref response 'users))])
@@ -86,7 +86,7 @@
 
 ;; authenticate username/password with discourse
 (define (has-password/discourse? username password)
-  (hash-ref (discourse "/admin/course/auth.json"
+  (hash-ref (discourse-req "/admin/course/auth.json"
                        (alist->form-urlencoded `((user . ,username)
                                                  (password . ,password))))
             'success))
