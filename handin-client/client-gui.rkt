@@ -2,6 +2,7 @@
 
 (require racket/class racket/unit racket/file racket/gui/base net/sendurl
          mrlib/switchable-button mrlib/bitmap-label drracket/tool framework
+         drracket/private/auto-language
          "info.rkt" "client.rkt" "this-collection.rkt")
 
 (provide tool@)
@@ -711,16 +712,6 @@
 
 (define handin-icon (scale-to-16 (in-this-collection "icon.png")))
 
-(define (string->editor! str defs)
-  (let* ([base (make-object editor-stream-in-bytes-base% str)]
-         [stream (make-object editor-stream-in% base)])
-    (read-editor-version stream base #t)
-    (read-editor-global-header stream)
-    (send* defs (begin-edit-sequence #f)
-                (erase) (read-from-file stream)
-                (end-edit-sequence))
-    (read-editor-global-footer stream)))
-
 (define tool@
   (unit
     (import drracket:tool^)
@@ -732,15 +723,15 @@
         (dynamic-require `(lib "updater.rkt" ,this-collection-name) 'bg-update)
         void))
 
-    (define (get-lang-prefix modname)
-      (let* ([pref (preferences:get (drracket:language-configuration:get-settings-preferences-symbol))]
-             [lang (drracket:language-configuration:language-settings-language pref)]
-             [settings (drracket:language-configuration:language-settings-settings pref)])
+    (define (get-lang-prefix modname editor)
+      (let* ([lang-settings (send editor get-next-settings)]
+             [lang (drracket:language-configuration:language-settings-language lang-settings)]
+             [settings (drracket:language-configuration:language-settings-settings lang-settings)])
         (send lang get-metadata modname settings)))
 
     (define (with-fake-header editor)
       (let ([new-editor (send editor copy-self)]
-            [text (get-lang-prefix 'handin)])
+            [text (get-lang-prefix 'handin editor)])
         (when text
           (send new-editor set-position 0)
           (send new-editor insert-port (open-input-string text)))
@@ -755,6 +746,32 @@
         (for ([ed (in-list (list definitions-with-fake-header interactions))]) (send ed write-to-file stream))
         (write-editor-global-footer stream)
         (send base get-bytes)))
+
+    ; Adapted from
+    ; https://github.com/racket/drracket/blob/a2f8efc910ffd5e0992279ff59bfe7145598d5ba/drracket/drracket/private/unit.rkt#L619-L643
+    (define (guess-language defs)
+      (let-values ([(matching-language settings)
+                    (pick-new-language
+                     defs
+                     (drracket:language-configuration:get-languages)
+                     #f #f)])
+        (when matching-language
+          (send defs set-next-settings
+                (drracket:language-configuration:language-settings
+                 matching-language
+                 settings)
+                #f))))
+
+    (define (string->editor! str defs)
+      (let* ([base (make-object editor-stream-in-bytes-base% str)]
+             [stream (make-object editor-stream-in% base)])
+        (read-editor-version stream base #t)
+        (read-editor-global-header stream)
+        (send* defs (begin-edit-sequence #f)
+          (erase) (read-from-file stream))
+        (guess-language defs)
+        (send defs end-edit-sequence)
+        (read-editor-global-footer stream)))
 
     (define tool-button-label (bitmap-label-maker button-label/h handin-icon))
 
