@@ -196,11 +196,13 @@
 (define (all-status-page user)
   (define row (handin-table-row user))
   (define upload-suffixes (get-conf 'allow-web-upload))
+  (define user-data-alist (map cons (map car (get-conf 'user-fields)) (cdr (get-user-data user))))
   (let* ([next
           (send/suspend
            (lambda (k)
              (make-page
               (format "Alle Abgaben für ~a" user)
+              `(p ,(format "Gruppe: ~a" (cdr (assoc "Tutoriumstermin" user-data-alist))))
               `(table ([class "submissions"])
                  (thead (tr (th "Aufgabenblatt") (th "Abgegebene Dateien") (th "Punkte")))
                  (tbody ,@(append (map (row k #t upload-suffixes) (get-conf 'active-dirs))
