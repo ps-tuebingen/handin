@@ -73,13 +73,15 @@
           (lambda ()
             (let* ([response (discourse-req "/admin/course/dump.json")]
                    [users (and response
-                               (hash-ref response 'success)
+                               (hash-ref response 'success #f)
                                (hash-ref response 'users))])
-              (for/hash ([user users])
-                (values (hash-ref user 'username)
-                        (cons (list 'discourse (hash-ref user 'username))
-                              (for/list ([extra-field (get-conf 'extra-fields)])
-                                (hash-ref user (string->symbol (car extra-field)))))))))]
+              (if users
+                  (for/hash ([user users])
+                    (values (hash-ref user 'username)
+                            (cons (list 'discourse (hash-ref user 'username))
+                                  (for/list ([extra-field (get-conf 'extra-fields)])
+                                    (hash-ref user (string->symbol (car extra-field)))))))
+                  (hash))))]
          [data (cached 2000.0 fetch-data)])
     (lambda (username)
       (hash-ref (data) username #f))))
