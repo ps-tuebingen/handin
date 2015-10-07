@@ -48,7 +48,7 @@
         (and config (hash-ref config key))))))
 
 ;; send request to discourse
-(define (discourse-req path [post-data #f])
+(define (discourse-req path #:post-data [post-data #f])
   (let* ([api-username (get-conf/discourse 'api_username)]
          [api-key (get-conf/discourse 'api_key)]
          [api-endpoint-hostname (get-conf/discourse 'api_endpoint_hostname)]
@@ -92,8 +92,8 @@
 ;; authenticate username/password with discourse
 (define (has-password/discourse? username password)
   (hash-ref (discourse-req "/admin/course/auth.json"
-                       (alist->form-urlencoded `((user . ,username)
-                                                 (password . ,password))))
+                           #:post-data (alist->form-urlencoded `((user . ,username)
+                                                                 (password . ,password))))
             'success))
 
 (define crypt
