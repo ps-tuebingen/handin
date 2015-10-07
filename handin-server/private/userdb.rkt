@@ -91,7 +91,7 @@
                                (hash-ref response 'users))])
               (if users
                   (for/hash ([user users])
-                    (values (hash-ref user 'username)
+                    (values (canonicalize-username-case (hash-ref user 'username))
                             (cons (list 'discourse (hash-ref user 'username))
                                   (for/list ([extra-field (get-conf 'extra-fields)])
                                     (hash-ref user (string->symbol (car extra-field)))))))
@@ -101,6 +101,10 @@
       (hash-ref (data) username #f))))
 
 ;; authenticate username/password with discourse
+;; Discourse itself is case-insensitive.
+;; Because usernames are also looked up in the DB produced by
+;; get-user-data/discourse, and because get-user-data/discourse uses canonicalize-username-case,
+;; we end up implementing correctly both settings of 'username-case-sensitive in config.rktd.
 (define (has-password/discourse? username password)
   (hash-ref (discourse-req "/admin/course/auth.json"
                            #:post-data (alist->form-urlencoded `((user . ,username)
