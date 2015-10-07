@@ -48,7 +48,7 @@
         (and config (hash-ref config key))))))
 
 ;; send request to discourse
-(define (discourse-req path #:post-data [post-data #f])
+(define (discourse-req path #:post-data [post-data #f] #:get-params [get-params '()])
   (let* ([api-username (get-conf/discourse 'api_username)]
          [api-key (get-conf/discourse 'api_key)]
          [api-endpoint-hostname (get-conf/discourse 'api_endpoint_hostname)]
@@ -56,7 +56,8 @@
          [full-path (format "~a?~a"
                             path
                             (alist->form-urlencoded `((api_key . ,api-key)
-                                                      (api_username . ,api-username))))])
+                                                      (api_username . ,api-username)
+                                                      ,@get-params)))])
     (and api-username api-key
       (let-values ([(status header port)
                     (http-sendrecv api-endpoint-hostname
