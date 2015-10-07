@@ -76,7 +76,7 @@
         (if DEBUG
             ; Careful: This logs sensitive data.
             (log-line  "DISCOURSE ~a ~a: ~a ~a" method full-path post-data status)
-            (log-line  "DISCOURSE ~a ~a: ~a ~a" method path status))
+            (log-line  "DISCOURSE ~a ~a: ~a" method path status))
         (define result (read-json port))
         (close-input-port port)
         result))))
