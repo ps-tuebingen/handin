@@ -6,6 +6,7 @@
          racket/date
          racket/string
          racket/port
+         racket/local
          xml
          net/uri-codec
          web-server/servlet
@@ -193,23 +194,29 @@
        (td ,(handin-grade user hi)))))
 
 (define (format-tutor-group-field tutor-group)
-  (define lines (port->lines (open-input-string tutor-group)))
-  (define split-lines (map (λ (line) (string-split line #px":\\s+")) lines))
-  (define valid (and (equal? (length lines) 3) (andmap (λ (x) (equal? (length x) 2)) split-lines)))
-  (if valid
-  `(dl ,@(for*/list ([fields split-lines]
-                    [node `((dt ,(first fields)) (dd ,(second fields)))])
-           node))
-  `(p "Noch keine Termin zugewiesen.")
-  ))
+  (or (with-handlers
+          ([exn:fail? (lambda (exn) #f)])
+        (and (string? tutor-group)
+             (local
+               [(define lines (port->lines (open-input-string tutor-group)))
+                (define split-lines (map (λ (line) (string-split line #px":\\s+")) lines))
+                (define valid (and (equal? (length lines) 3) (andmap (λ (x) (equal? (length x) 2)) split-lines)))]
+               (and valid
+                    `(dl ,@(for*/list ([fields split-lines]
+                                       [node `((dt ,(first fields)) (dd ,(second fields)))])
+                             node))))))
+      `(p "Noch keine Termin zugewiesen.")))
 
 (module+ test
   (require rackunit)
   (check-equal?
- (format-tutor-group-field "Zeit: Dienstag, 08.00 Uhr
+   (format-tutor-group-field "Zeit: Dienstag, 08.00 Uhr
 Ort:  Raum VB N3, Morgenstelle
 Tutor: ivan_the_terrible")
- '(dl (dt "Zeit") (dd "Dienstag, 08.00 Uhr") (dt "Ort") (dd "Raum VB N3, Morgenstelle") (dt "Tutor") (dd "ivan_the_terrible"))))
+   '(dl (dt "Zeit") (dd "Dienstag, 08.00 Uhr") (dt "Ort") (dd "Raum VB N3, Morgenstelle") (dt "Tutor") (dd "ivan_the_terrible")))
+  (check-equal? (format-tutor-group-field 'null) `(p "Noch keine Termin zugewiesen."))
+  (check-equal? (format-tutor-group-field "") `(p "Noch keine Termin zugewiesen."))
+  (check-equal? (format-tutor-group-field "Keins") `(p "Noch keine Termin zugewiesen.")))
 
 ;; Display the status of one user and all handins.
 (define (all-status-page user)
