@@ -50,10 +50,11 @@
 ;; send request to discourse
 (define (discourse-req path [post-data #f])
   (let ([api-username (get-conf/discourse 'api_username)]
-        [api-key (get-conf/discourse 'api_key)])
+        [api-key (get-conf/discourse 'api_key)]
+        [api-endpoint-hostname (get-conf/discourse 'api_endpoint_hostname)])
     (and api-username api-key
       (let-values ([(status header port)
-                    (http-sendrecv "forum-ps.informatik.uni-tuebingen.de"
+                    (http-sendrecv api-endpoint-hostname
                                    (format "~a?~a"
                                      path
                                      (alist->form-urlencoded `((api_key . ,api-key)
