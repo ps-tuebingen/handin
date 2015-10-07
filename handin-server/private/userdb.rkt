@@ -49,21 +49,23 @@
 
 ;; send request to discourse
 (define (discourse-req path [post-data #f])
-  (let ([api-username (get-conf/discourse 'api_username)]
-        [api-key (get-conf/discourse 'api_key)]
-        [api-endpoint-hostname (get-conf/discourse 'api_endpoint_hostname)])
+  (let* ([api-username (get-conf/discourse 'api_username)]
+         [api-key (get-conf/discourse 'api_key)]
+         [api-endpoint-hostname (get-conf/discourse 'api_endpoint_hostname)]
+         [method (if post-data "POST" "GET")]
+         [full-path (format "~a?~a"
+                            path
+                            (alist->form-urlencoded `((api_key . ,api-key)
+                                                      (api_username . ,api-username))))])
     (and api-username api-key
       (let-values ([(status header port)
                     (http-sendrecv api-endpoint-hostname
-                                   (format "~a?~a"
-                                     path
-                                     (alist->form-urlencoded `((api_key . ,api-key)
-                                                               (api_username . ,api-username))))
+                                   full-path
                                    #:ssl? #t
                                    #:version "1.1"
-                                   #:method (if post-data "POST" "GET")
+                                   #:method method
                                    #:data post-data)])
-        (log-line  "DISCOURSE ~a: ~a" path status)
+        (log-line  "DISCOURSE ~a ~a: ~a ~a" method full-path post-data status)
         (define result (read-json port))
         (close-input-port port)
         result))))
