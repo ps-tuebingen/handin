@@ -465,8 +465,7 @@
          (when (a-ref data key #f) (perror "multiple values for ~e" key))
          (case key
            [(username/s)
-            (unless (get-conf 'username-case-sensitive)
-              (set! val (string-foldcase val)))
+            (set! val (canonicalize-username-case val))
             (let ([usernames
                    ;; Username lists must always be sorted, and never empty
                    ;; (regexp-split will not return an empty list)

@@ -7,11 +7,17 @@
          "logger.rkt"
          "config.rkt")
 
-;; Acess user data for a user.
+;; Access user data for a user.
 (provide get-user-data)
 (define (get-user-data user)
   (or (get-user-data/local user)
       (get-user-data/discourse user)))
+
+(provide canonicalize-username-case)
+(define (canonicalize-username-case username)
+  (if (get-conf 'username-case-sensitive)
+      username
+      (string-foldcase username)))
 
 (define get-user-data/local
   (let ([users-file (build-path server-dir "users.rktd")])
@@ -48,36 +54,44 @@
         (and config (hash-ref config key))))))
 
 ;; send request to discourse
-(define (discourse-req path [post-data #f])
-  (let ([api-username (get-conf/discourse 'api_username)]
-        [api-key (get-conf/discourse 'api_key)])
+(define (discourse-req path #:post-data [post-data #f] #:get-params [get-params '()])
+  (let* ([api-username (get-conf/discourse 'api_username)]
+         [api-key (get-conf/discourse 'api_key)]
+         [api-endpoint-hostname (get-conf/discourse 'api_endpoint_hostname)]
+         [method (if post-data "POST" "GET")]
+         [full-path (format "~a?~a"
+                            path
+                            (alist->form-urlencoded `((api_key . ,api-key)
+                                                      (api_username . ,api-username)
+                                                      ,@get-params)))])
     (and api-username api-key
       (let-values ([(status header port)
-                    (http-sendrecv "forum-ps.informatik.uni-tuebingen.de"
-                                   (format "~a?~a"
-                                     path
-                                     (alist->form-urlencoded `((api_key . ,api-key)
-                                                               (api_username . ,api-username))))
+                    (http-sendrecv api-endpoint-hostname
+                                   full-path
                                    #:ssl? #t
                                    #:version "1.1"
-                                   #:method (if post-data "POST" "GET")
+                                   #:method method
                                    #:data post-data)])
-        (log-line  "DISCOURSE ~a: ~a" path status)
+        (log-line  "DISCOURSE ~a ~a: ~a ~a" method full-path post-data status)
         (define result (read-json port))
         (close-input-port port)
         result))))
+
+(define (to-ruby-boolean bool)
+  (if bool "true" "false"))
 
 ;; fetch user database of discourse
 (define get-user-data/discourse
   (let* ([fetch-data
           (lambda ()
-            (let* ([response (discourse-req "/admin/course/dump.json")]
+            (let* ([allow-staff (to-ruby-boolean (get-conf 'discourse-auth-staff))]
+                   [response (discourse-req "/admin/course/dump.json" #:get-params `((staff . ,allow-staff)))]
                    [users (and response
                                (hash-ref response 'success #f)
                                (hash-ref response 'users))])
               (if users
                   (for/hash ([user users])
-                    (values (hash-ref user 'username)
+                    (values (canonicalize-username-case (hash-ref user 'username))
                             (cons (list 'discourse (hash-ref user 'username))
                                   (for/list ([extra-field (get-conf 'extra-fields)])
                                     (hash-ref user (string->symbol (car extra-field)))))))
@@ -87,10 +101,14 @@
       (hash-ref (data) username #f))))
 
 ;; authenticate username/password with discourse
+;; Discourse itself is case-insensitive.
+;; Because usernames are also looked up in the DB produced by
+;; get-user-data/discourse, and because get-user-data/discourse uses canonicalize-username-case,
+;; we end up implementing correctly both settings of 'username-case-sensitive in config.rktd.
 (define (has-password/discourse? username password)
   (hash-ref (discourse-req "/admin/course/auth.json"
-                       (alist->form-urlencoded `((user . ,username)
-                                                 (password . ,password))))
+                           #:post-data (alist->form-urlencoded `((user . ,username)
+                                                                 (password . ,password))))
             'success))
 
 (define crypt
