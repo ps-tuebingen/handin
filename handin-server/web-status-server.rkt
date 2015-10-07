@@ -196,13 +196,14 @@
 (define (all-status-page user)
   (define row (handin-table-row user))
   (define upload-suffixes (get-conf 'allow-web-upload))
-  (define user-data-alist (map cons (map car (get-conf 'user-fields)) (cdr (get-user-data user))))
+  (define user-data-alist (map cons (map car (get-conf 'user-fields)) (cdr (get-user-data user)))) ; XXX Should be centralized, and part of the userdb.
+  (define tutor-group (cdr (assoc "Tutoriumstermin" user-data-alist)))
   (let* ([next
           (send/suspend
            (lambda (k)
              (make-page
               (format "Alle Abgaben für ~a" user)
-              `(p ,(format "Gruppe: ~a" (cdr (assoc "Tutoriumstermin" user-data-alist))))
+              `(p ,(format "Gruppe: ~a" tutor-group))
               `(table ([class "submissions"])
                  (thead (tr (th "Aufgabenblatt") (th "Abgegebene Dateien") (th "Punkte")))
                  (tbody ,@(append (map (row k #t upload-suffixes) (get-conf 'active-dirs))
