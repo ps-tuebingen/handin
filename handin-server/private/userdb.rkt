@@ -13,6 +13,12 @@
   (or (get-user-data/local user)
       (get-user-data/discourse user)))
 
+(provide canonicalize-username-case)
+(define (canonicalize-username-case username)
+  (if (get-conf 'username-case-sensitive)
+      username
+      (string-foldcase username)))
+
 (define get-user-data/local
   (let ([users-file (build-path server-dir "users.rktd")])
     (unless (file-exists? users-file)
