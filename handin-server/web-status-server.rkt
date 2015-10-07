@@ -192,18 +192,40 @@
        (td ,(handin-link k user hi upload-suffixes))
        (td ,(handin-grade user hi)))))
 
+(define (format-tutor-group-field tutor-group)
+  (define lines (port->lines (open-input-string tutor-group)))
+  (define split-lines (map (λ (line) (string-split line #px":\\s+")) lines))
+  (define valid (and (equal? (length lines) 3) (andmap (λ (x) (equal? (length x) 2)) split-lines)))
+  (if valid
+  `(dl ,@(for*/list ([fields split-lines]
+                    [node `((dt ,(first fields)) (dd ,(second fields)))])
+           node))
+  `(p "Noch keine Termin zugewiesen.")
+  ))
+
+(module+ test
+  (require rackunit)
+  (check-equal?
+ (format-tutor-group-field "Zeit: Dienstag, 08.00 Uhr
+Ort:  Raum VB N3, Morgenstelle
+Tutor: ivan_the_terrible")
+ '(dl (dt "Zeit") (dd "Dienstag, 08.00 Uhr") (dt "Ort") (dd "Raum VB N3, Morgenstelle") (dt "Tutor") (dd "ivan_the_terrible"))))
+
 ;; Display the status of one user and all handins.
 (define (all-status-page user)
   (define row (handin-table-row user))
   (define upload-suffixes (get-conf 'allow-web-upload))
   (define user-data-alist (map cons (map car (get-conf 'user-fields)) (cdr (get-user-data user)))) ; XXX Should be centralized, and part of the userdb.
   (define tutor-group (cdr (assoc "Tutoriumstermin" user-data-alist)))
+  (define formatted-tutor-group (format-tutor-group-field tutor-group))
   (let* ([next
           (send/suspend
            (lambda (k)
              (make-page
               (format "Alle Abgaben für ~a" user)
-              `(p ,(format "Gruppe: ~a" tutor-group))
+              `(h1 "Tutoriumtermin")
+              formatted-tutor-group
+              `(h1 "Abgaben")
               `(table ([class "submissions"])
                  (thead (tr (th "Aufgabenblatt") (th "Abgegebene Dateien") (th "Punkte")))
                  (tbody ,@(append (map (row k #t upload-suffixes) (get-conf 'active-dirs))
