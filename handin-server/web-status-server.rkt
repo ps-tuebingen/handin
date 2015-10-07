@@ -230,9 +230,9 @@ Tutor: ivan_the_terrible")
            (lambda (k)
              (make-page
               (format "Alle Abgaben für ~a" user)
-              `(h1 "Tutoriumtermin")
+              `(h2 "Tutoriumtermin")
               formatted-tutor-group
-              `(h1 "Abgaben")
+              `(h2 "Abgaben")
               `(table ([class "submissions"])
                  (thead (tr (th "Aufgabenblatt") (th "Abgegebene Dateien") (th "Punkte")))
                  (tbody ,@(append (map (row k #t upload-suffixes) (get-conf 'active-dirs))
