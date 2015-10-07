@@ -71,11 +71,15 @@
         (close-input-port port)
         result))))
 
+(define (to-ruby-boolean bool)
+  (if bool "true" "false"))
+
 ;; fetch user database of discourse
 (define get-user-data/discourse
   (let* ([fetch-data
           (lambda ()
-            (let* ([response (discourse-req "/admin/course/dump.json")]
+            (let* ([allow-staff (to-ruby-boolean (get-conf 'discourse-auth-staff))]
+                   [response (discourse-req "/admin/course/dump.json" #:get-params `((staff . ,allow-staff)))]
                    [users (and response
                                (hash-ref response 'success #f)
                                (hash-ref response 'users))])
