@@ -53,6 +53,7 @@
       (let ([config (discourse-config)])
         (and config (hash-ref config key))))))
 
+(define DEBUG #f)
 ;; send request to discourse
 (define (discourse-req path #:post-data [post-data #f] #:get-params [get-params '()])
   (let* ([api-username (get-conf/discourse 'api_username)]
@@ -72,7 +73,10 @@
                                    #:version "1.1"
                                    #:method method
                                    #:data post-data)])
-        (log-line  "DISCOURSE ~a ~a: ~a ~a" method full-path post-data status)
+        (if DEBUG
+            ; Careful: This logs sensitive data.
+            (log-line  "DISCOURSE ~a ~a: ~a ~a" method full-path post-data status)
+            (log-line  "DISCOURSE ~a ~a: ~a ~a" method path status))
         (define result (read-json port))
         (close-input-port port)
         result))))
