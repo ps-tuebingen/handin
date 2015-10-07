@@ -7,7 +7,7 @@
          "logger.rkt"
          "config.rkt")
 
-;; Acess user data for a user.
+;; Access user data for a user.
 (provide get-user-data)
 (define (get-user-data user)
   (or (get-user-data/local user)
