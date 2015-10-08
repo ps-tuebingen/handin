@@ -205,7 +205,7 @@
                     `(dl ,@(for*/list ([fields split-lines]
                                        [node `((dt ,(first fields)) (dd ,(second fields)))])
                              node))))))
-      `(p "Noch keine Termin zugewiesen.")))
+      `(p "Noch kein Termin zugewiesen.")))
 
 (module+ test
   (require rackunit)
@@ -214,9 +214,9 @@
 Ort:  Raum VB N3, Morgenstelle
 Tutor: ivan_the_terrible")
    '(dl (dt "Zeit") (dd "Dienstag, 08.00 Uhr") (dt "Ort") (dd "Raum VB N3, Morgenstelle") (dt "Tutor") (dd "ivan_the_terrible")))
-  (check-equal? (format-tutor-group-field 'null) `(p "Noch keine Termin zugewiesen."))
-  (check-equal? (format-tutor-group-field "") `(p "Noch keine Termin zugewiesen."))
-  (check-equal? (format-tutor-group-field "Keins") `(p "Noch keine Termin zugewiesen.")))
+  (check-equal? (format-tutor-group-field 'null) `(p "Noch kein Termin zugewiesen."))
+  (check-equal? (format-tutor-group-field "") `(p "Noch kein Termin zugewiesen."))
+  (check-equal? (format-tutor-group-field "Keins") `(p "Noch kein Termin zugewiesen.")))
 
 ;; Display the status of one user and all handins.
 (define (all-status-page user)
