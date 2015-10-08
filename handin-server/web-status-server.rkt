@@ -230,7 +230,7 @@ Tutor: ivan_the_terrible")
            (lambda (k)
              (make-page
               (format "Alle Abgaben für ~a" user)
-              `(h2 "Tutoriumtermin")
+              `(h2 "Tutoriumstermin")
               formatted-tutor-group
               `(h2 "Abgaben")
               `(table ([class "submissions"])
