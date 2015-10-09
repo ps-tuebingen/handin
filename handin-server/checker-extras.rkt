@@ -1,5 +1,9 @@
-#lang racket
-(require handin-server/checker 2htdp/image)
+#lang racket/base
+(require racket/local
+         racket/list
+         racket/string
+         racket/port
+         handin-server/checker 2htdp/image)
 (provide (all-defined-out))
 
 ; Translate a language name to something we could show to the user.
