@@ -1,5 +1,5 @@
 #lang racket
-(require handin-server/checker)
+(require handin-server/checker 2htdp/image)
 (provide (all-defined-out))
 
 ; Translate a language name to something we could show to the user.
@@ -66,3 +66,34 @@
          [name (cdr result)]) ; Name is only valid if successful-eval.
     (when successful-eval
       body ...)))
+
+(define-syntax-rule (extract-from-handin/typed type-pred? typename name body ...)
+  (extract-from-handin
+   name
+   (if (not (type-pred? name))
+       (error* (string-append "We cannot understand the value of '~a'.\n"
+                              "  We expect: ~a.\n"
+                              "  We found: ~.v\n\n"
+                              "Remember to program your picture like this:\n\n"
+                              "  (define ~a\n"
+                              "    (... your expression here ...))\n\n")
+               'name
+               typename
+               'name
+               name)
+       (begin
+         (void)
+         body ...))))
+
+(define-syntax-rule (extract-from-handin/image name body ...)
+  (extract-from-handin/typed image? "an image" name body ...))
+(define-syntax-rule (extract-from-handin/number name body ...)
+  (extract-from-handin/typed number? "a number" name body ...))
+(define-syntax-rule (extract-from-handin/string name body ...)
+  (extract-from-handin/typed string? "a string" name body ...))
+
+(require (only-in racket/gui/base open-input-text-editor))
+; Not used here, but potentially useful elsewhere.
+(define (get-definitions-port submission)
+  (let-values ([(definitions interactions) (unpack-submission submission)])
+    (open-input-text-editor definitions)))
