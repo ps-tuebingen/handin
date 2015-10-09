@@ -54,11 +54,8 @@
     (error* (string-append "Warning: We cannot find the constant '~a'.\n\n"
                            "Remember to program your expression like this:\n\n"
                            "  (define ~a\n"
-                           "    (... your expression here ...))\n\n"
-                           "This is the error we got:\n\n"
-                           "~a\n")
-            symbol symbol
-            (exn-message e))
+                           "    (... your expression here ...))\n")
+            symbol symbol)
     (cons #f '())))
 
 (define-syntax-rule (extract-from-handin name body ...)
