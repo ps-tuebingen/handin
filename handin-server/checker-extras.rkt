@@ -58,11 +58,14 @@
                            "This is the error we got:\n\n"
                            "~a\n")
             symbol symbol
-            (exn-message e))))
+            (exn-message e))
+    (cons #f '())))
 
 (define-syntax-rule (extract-from-handin name body ...)
-  (let ([name
-         (with-handlers
-             ([exn:fail? (handle-not-found 'name)])
-           (!eval name))])
-    body ...))
+  (let* ([result (with-handlers
+                     ([exn:fail? (handle-not-found 'name)])
+                   (cons #t (!eval name)))]
+         [successful-eval (car result)]
+         [name (cdr result)]) ; Name is only valid if successful-eval.
+    (when successful-eval
+      body ...)))
