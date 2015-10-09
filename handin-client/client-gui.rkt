@@ -750,11 +750,10 @@
                  get-interactions-text)
         (super-instantiate ())
 
-        #;
         (define/override (file-menu:between-open-and-revert file-menu)
           ;; super adds a separator, add this and another sep after that
           (super file-menu:between-open-and-revert file-menu)
-          (new menu-item%
+          #;(new menu-item%
                [label (format "Manage ~a Handin Account..." handin-name)]
                [parent file-menu]
                [callback (lambda (m e)
