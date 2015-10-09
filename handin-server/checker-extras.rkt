@@ -51,7 +51,7 @@
 
 (define (handle-not-found symbol)
   (lambda (e)
-    (error* (string-append "We cannot find the constant '~a'.\n\n"
+    (error* (string-append "Warning: We cannot find the constant '~a'.\n\n"
                            "Remember to program your expression like this:\n\n"
                            "  (define ~a\n"
                            "    (... your expression here ...))\n\n"
