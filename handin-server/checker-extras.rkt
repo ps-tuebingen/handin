@@ -30,11 +30,8 @@
 
 (define saved-grades (make-hash))
 (define (start-grading)
-  ; Copy handin.rkt to korrektur.rkt, logging errors if the target already exists.
-  (with-handlers
-      ([exn:fail:filesystem:exists?
-        (λ (exn) (log-line "korrektur.rkt already exists; error: ~a" (exn-message exn)))])
-    (copy-file "handin" "korrektur.rkt")))
+  ; Copy handin.rkt to Korrektur.rkt
+  (void))
 
 (define GRADE-TEMPLATE-PATH "../../grade-template.rktd")
 ; Save grades
