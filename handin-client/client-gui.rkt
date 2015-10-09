@@ -114,11 +114,7 @@
             [on-retrieve 'retrieve]
             [else (error 'handin-frame "bad initial values")]))
 
-    (define status
-      (new message%
-           [label (format "Making secure connection to ~a..." server)]
-           [parent this]
-           [stretchable-width #t]))
+    (define status #f)
     (define username
       (new text-field%
            [label "Username:"]
@@ -242,6 +238,11 @@
         (when go?
           (custodian-shutdown-all comm-cust)
           (show #f))))
+    (set! status
+          (new message%
+               [label (format "Making secure connection to ~a..." server)]
+               [parent this]
+               [stretchable-width #t]))
 
     (define continue-abort? #f)
     (define abort-commit-dialog
