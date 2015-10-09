@@ -242,7 +242,14 @@
           (new message%
                [label (format "Making secure connection to ~a..." server)]
                [parent this]
-               [stretchable-width #t]))
+               [stretchable-width #t]
+               ; To make this bold, we just need this:
+               [font (make-object font%
+                   (send normal-control-font get-size) ; size
+                   'system ; family
+                   'normal ; style
+                   'bold   ; weight
+                   )]))
 
     (define continue-abort? #f)
     (define abort-commit-dialog
