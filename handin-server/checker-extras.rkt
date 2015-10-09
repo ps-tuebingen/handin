@@ -2,12 +2,31 @@
 (require handin-server/checker)
 (provide (all-defined-out))
 
-(define user-error-message
-  (string-append "We cannot run your code.\n\n"
-                  "Please fix the error before submitting.\n"
-                  "Hit \"Run\" and debug your code.\n\n"
-                  "This is the error we got:\n\n"
-                  "~a\n"))
+; Translate a language name to something we could show to the user.
+; Currently stubbed and not really used.
+(define (lang-display-name string)
+  string)
+
+(define (user-error-message underlying-message)
+  (define match-result
+    (regexp-match
+     #rx"^make-module-evaluator: module code used `([^']*)' for a language, expecting `([^']*)'"
+     underlying-message))
+  ; Fail the submission in this case.
+  (raise-user-error
+   (if
+    match-result
+    (local
+      ; These definitions are available to the actual message.
+      [(define used-lang (lang-display-name (second match-result)))
+       (define expected-lang (lang-display-name (third match-result)))]
+      (format "You have selected the wrong language. Please fix according to instructions and resubmit."))
+    (format
+     (string-append "We cannot run your code.\n\n"
+                    "Please fix the error before submitting.\n"
+                    "Hit \"Run\" and debug your code.\n\n"
+                    "This is the error we got:\n\n"
+                    "~a\n") underlying-message))))
 
 (define saved-grades (make-hash))
 (define (start-grading)
