@@ -10,7 +10,9 @@
                "htdp-lib"
                "net-lib"
                "pconvert-lib"
+               "rackunit-lib"
                "sandbox-lib"
+               "srfi-lib"
                "web-server-lib"))
 (define build-deps '("gui-doc"
                      "racket-doc"
