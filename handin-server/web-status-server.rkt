@@ -7,6 +7,7 @@
          racket/string
          racket/port
          racket/local
+         racket/bool
          xml
          net/uri-codec
          web-server/servlet
@@ -100,6 +101,7 @@
                        (parameterize ([current-directory dir])
                          (sort (filter (lambda (f)
                                          (and (not (equal? f "grade"))
+                                              (not (equal? f "grade.rktd"))
                                               (not (equal? f "handin.png"))
                                               (file-exists? f)))
                                        (map path->string (directory-list)))
@@ -172,26 +174,75 @@
                                 (read-string (file-size filename)))))))])
     (or grade "--")))
 
+;; check whether something is a filled grading scheme marked as finished
+(define (finished-grading-scheme? entries)
+  (and (list? entries)
+       (for/and ([entry (in-list entries)])
+         (and (list? entry)
+              (or (and (string? (first entry))
+                       (number? (second entry)))
+                  (and (symbol? (first entry))
+                       (symbol=? (first entry) 'grading-finished)
+                       (second entry)))))
+       (for/or ([entry (in-list entries)])
+         (and (list? entry)
+              (symbol? (first entry))
+              (symbol=? (first entry) 'grading-finished)))))
+
+;; convert filled grading scheme to definition list xexpr
+(define (format-grade-details entries)
+  (if (list? entries)
+    `((dl ,@(for/list ([entry (in-list entries)]
+                      #:when (string? (first entry))
+                      [child (in-list (list `(dt ,(first entry)) `(dd ,(number->string (second entry)))))])
+             child)))
+    `()))
+
+;; compute total grade based on filled grading scheme
+(define (grading-scheme-total entries)
+  (for/sum ([entry (in-list entries)]
+            #:when (string? (first entry)))
+    (second entry)))
+
+;; Load sum of grades and detailed grades from grade.rktd file for handin hi of user
+;; (falling back to grade file for the sum and #f for the details)
+(define (handin-grade/details user hi)
+  (let* ([dir (find-handin-entry hi user)]
+         [grade (and dir
+                     (let ([filename (build-path dir "grade.rktd")])
+                       (and (file-exists? filename)
+                            (with-input-from-file filename
+                              (lambda ()
+                                (read))))))])
+    (if (finished-grading-scheme? grade)
+      (values (number->string (grading-scheme-total grade)) grade)
+      (values (handin-grade user hi) #f))))
+
 ;; Display the status of one user and one handin.
 (define (one-status-page user for-handin)
+  (define-values (grade details)
+    (handin-grade/details user for-handin))
   (let* ([next (send/suspend
                 (lambda (k)
                   (make-page (format "Nutzer: ~a, Abgabe: ~a" user for-handin)
                     `(p ,@(handin-link k user for-handin #f))
-                    `(p "Punkte: " ,(handin-grade user for-handin))
+                    `(p "Punkte: " ,grade)
+                    `(p ,@(format-grade-details details))
                     `(p ,@(solution-link k for-handin))
                     `(p (a ([href ,(make-k k "allofthem")])
                            ,(format "Alle Abgaben für ~a" user))))))])
     (handle-status-request user next null)))
 
-
 ;; Displays a row in a table of handins.
 (define (((handin-table-row user) k active? upload-suffixes) dir)
   (let ([hi (assignment<->dir dir)])
+    (define-values (grade details)
+      (handin-grade/details user hi))
     `(tr ([class ,(if active? "active" "inactive")])
        (th ([scope "row"]) ,hi)
-       (td ,(handin-link k user hi upload-suffixes))
-       (td ,(handin-grade user hi)))))
+       (td ,(handin-link k user hi upload-suffixes)
+           ,@(format-grade-details details))
+       (td ,grade))))
 
 (define (format-tutor-group-field tutor-group)
   (or (with-handlers
