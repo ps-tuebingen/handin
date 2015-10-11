@@ -3,5 +3,4 @@
 . ./merges.inc.sh
 setup
 merge staging
-merge production
 end
