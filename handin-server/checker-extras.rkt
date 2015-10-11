@@ -41,7 +41,7 @@
 ; Save grades
 (define (end-grading)
   (with-output-to-file
-      "grade.rktd"
+      "grade-prefilled.rktd"
     (λ () (display (for/fold ([grade (port->string (open-input-file GRADE-TEMPLATE-PATH))])
                              ([(item-name item-grade) saved-grades])
                      (string-replace grade item-name (number->string item-grade))))))
