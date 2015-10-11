@@ -1,11 +1,11 @@
-setup () {
-  git checkout master
+update () {
+  git checkout $1
   git pull
 }
 
 merge() {
-  git checkout deploy-$1
-  git merge master --ff-only
+  git checkout $1
+  git merge $2 --ff-only
 }
 
 end() {

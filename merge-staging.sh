@@ -1,6 +1,6 @@
 #!/bin/sh -ve
 
 . ./merge.inc.sh
-setup
-merge staging
+update master
+merge deploy-staging master
 end
