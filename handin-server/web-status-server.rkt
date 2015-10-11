@@ -200,7 +200,7 @@
              (local
                [(define lines (port->lines (open-input-string tutor-group)))
                 (define split-lines (map (λ (line) (string-split line #px":\\s+")) lines))
-                (define valid (and (equal? (length lines) 3) (andmap (λ (x) (equal? (length x) 2)) split-lines)))]
+                (define valid (and (> (length lines) 0) (andmap (λ (x) (equal? (length x) 2)) split-lines)))]
                (and valid
                     `(dl ,@(for*/list ([fields split-lines]
                                        [node `((dt ,(first fields)) (dd ,(second fields)))])
@@ -214,6 +214,10 @@
 Ort:  Raum VB N3, Morgenstelle
 Tutor: ivan_the_terrible")
    '(dl (dt "Zeit") (dd "Dienstag, 08.00 Uhr") (dt "Ort") (dd "Raum VB N3, Morgenstelle") (dt "Tutor") (dd "ivan_the_terrible")))
+  (check-equal?
+   (format-tutor-group-field "Zeit: Dienstag, 08.00 Uhr
+Ort:  Raum VB N3, Morgenstelle")
+   '(dl (dt "Zeit") (dd "Dienstag, 08.00 Uhr") (dt "Ort") (dd "Raum VB N3, Morgenstelle")))
   (check-equal? (format-tutor-group-field 'null) `(p "Noch kein Termin zugewiesen."))
   (check-equal? (format-tutor-group-field "") `(p "Noch kein Termin zugewiesen."))
   (check-equal? (format-tutor-group-field "Keins") `(p "Noch kein Termin zugewiesen.")))
