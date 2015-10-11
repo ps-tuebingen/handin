@@ -32,10 +32,13 @@
                     "This is the error we got:\n\n"
                     "~a\n") underlying-message))))
 
-(define saved-grades (make-hash))
+; Hashtables of saved grades.
+; To understand why make-thread-cell is needed, see warnings around
+; warning-buffer-cell
+(define saved-grades (make-thread-cell #f))
 (define (start-grading)
-  ; Copy handin.rkt to Korrektur.rkt
-  (void))
+  ; This way, each thread gets a fresh mutable hashtable.
+  (thread-cell-set! saved-grades (make-hash)))
 
 (define GRADE-TEMPLATE-PATH "../../grade-template.rktd")
 ; Save grades
@@ -43,7 +46,7 @@
   (with-output-to-file
       "grade-prefilled.rktd"
     (λ () (display (for/fold ([grade (port->string (open-input-file GRADE-TEMPLATE-PATH))])
-                             ([(item-name item-grade) saved-grades])
+                             ([(item-name item-grade) (thread-cell-ref saved-grades)])
                      (string-replace grade item-name (number->string item-grade))))))
   (define warning-buffer (thread-cell-ref warning-buffer-cell))
   (when (not (string=? warning-buffer ""))
@@ -51,7 +54,7 @@
 
 ; Save item-grade as grade for item-name
 (define (set-grade item-name item-grade)
-  (hash-set! saved-grades item-name item-grade))
+  (hash-set! (thread-cell-ref saved-grades) item-name item-grade))
 
 ; Saves the warnings for a submission.
 ; This variable is created per module, that is, per handin-server.
