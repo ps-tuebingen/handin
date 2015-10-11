@@ -260,14 +260,14 @@ Tutor: ivan_the_terrible")
                   [(name) (path->string name)]
                   [(check) (and (pair? elts) (car elts))])
       (if (null? elts)
-          ;; must be rooted in a submission directory (why build-path instead
-          ;; of using `path'? -- because path will have a trailing slash)
-          (member (build-path base name)
-                  (cond
-                   [(and allow-active? allow-inactive?) (get-conf 'all-dirs)]
-                   [allow-inactive? (get-conf 'inactive-dirs)]
-                   [allow-active? (get-conf 'active-dirs)]
-                   [else null]))
+          ;; must be rooted in a submission directory
+          (member (explode-path path)
+                  (map explode-path
+                       (cond
+                         [(and allow-active? allow-inactive?) (get-conf 'all-dirs)]
+                         [allow-inactive? (get-conf 'inactive-dirs)]
+                         [allow-active? (get-conf 'active-dirs)]
+                         [else null])))
           (and (cond [(eq? '* check) #t]
                      [(regexp? check) (regexp-match? check name)]
                      [(string? check)
