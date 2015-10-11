@@ -100,11 +100,8 @@
         (cond [(not (or (file-exists? f) (directory-exists? f)))
                ;; f is in dir but not in the working directory
                (copy-directory/files dir/f f)]
-              [(or (<= (file-or-directory-modify-seconds f)
+              [(<= (file-or-directory-modify-seconds f)
                        (file-or-directory-modify-seconds dir/f))
-                   ;; just in case, check the size too:
-                   (and (file-exists? f) (file-exists? dir/f)
-                        (not (= (file-size f) (file-size dir/f)))))
                ;; f is newer in dir than in the working directory
                (delete-directory/files f)
                (copy-directory/files dir/f f)])))))
