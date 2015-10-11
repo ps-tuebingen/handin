@@ -1,6 +1,6 @@
 #!/bin/sh -ve
 
-. ./merges.inc.sh
+. ./merge.inc.sh
 setup
 merge staging
 end
