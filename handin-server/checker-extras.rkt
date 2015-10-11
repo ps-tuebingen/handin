@@ -44,14 +44,25 @@
       "grade.rktd"
     (λ () (display (for/fold ([grade (port->string (open-input-file GRADE-TEMPLATE-PATH))])
                              ([(item-name item-grade) saved-grades])
-                     (string-replace grade item-name (number->string item-grade)))))))
+                     (string-replace grade item-name (number->string item-grade))))))
+  (define warning-buffer (thread-cell-ref warning-buffer-cell))
+  (when (not (string=? warning-buffer ""))
+    (message warning-buffer '(ok caution))))
 
 ; Save item-grade as grade for item-name
 (define (set-grade item-name item-grade)
   (hash-set! saved-grades item-name item-grade))
 
+; Saves the warnings for a submission.
+; This variable is created per module, that is, per handin-server.
+; To ensure the buffer is not shared across submissions, we use a per-thread
+; variable, since checkers for different submissions run in different threads.
+; I took the idea from add-report-line!.
+(define warning-buffer-cell (make-thread-cell ""))
+
 (define (error* fmt . args)
-  (message (apply format fmt args) '(ok caution)))
+  (define fmt-msg (apply format fmt args))
+  (thread-cell-set! warning-buffer-cell (string-append (thread-cell-ref warning-buffer-cell) fmt-msg "\n")))
 
 (define (handle-not-found symbol)
   (lambda (e)
