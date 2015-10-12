@@ -96,14 +96,14 @@
 ;; and/or links to upload such files now.
 (define (handin-link k user hi upload-suffixes)
   (let* ([dir (find-handin-entry hi user)]
-         [image (and dir (build-path dir "handin.png"))]
+         [image (and dir (build-path dir "result.png"))]
          [l (and dir (with-handlers ([exn:fail? (lambda (x) null)])
                        (parameterize ([current-directory dir])
                          (sort (filter (lambda (f)
                                          (and (not (equal? f "grade"))
                                               (not (equal? f "grade.rktd"))
                                               (not (equal? f "grade-prefilled.rktd"))
-                                              (not (equal? f "handin.png"))
+                                              (not (equal? f "result.png"))
                                               (file-exists? f)))
                                        (map path->string (directory-list)))
                                string<?))))]
