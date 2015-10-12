@@ -102,6 +102,7 @@
                          (sort (filter (lambda (f)
                                          (and (not (equal? f "grade"))
                                               (not (equal? f "grade.rktd"))
+                                              (not (equal? f "grade-prefilled.rktd"))
                                               (not (equal? f "handin.png"))
                                               (file-exists? f)))
                                        (map path->string (directory-list)))
