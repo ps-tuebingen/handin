@@ -177,6 +177,12 @@
       (queue-callback
        (lambda ()
          (when abort-commit-dialog (send abort-commit-dialog show #f))
+         ; Using `'(ok caution)` below is not necessarily right, we should get info from the client.
+         (message-box "Handin" final-message this '(ok caution))
+         ; This is hacky; final-message has multiple lines,
+         ; but only the first will be shown.
+         ; You better start your success message with "Handin saved"
+         ; or equivalent on the first line.
          (send status set-label final-message)
          (set! committing? #f)
          (done-interface))))
