@@ -2,7 +2,7 @@
 
 (require racket/class racket/gui/base racket/pretty
          (prefix-in pc: mzlib/pconvert)
-         (only-in "main.rkt" timeout-control get-user-assignment-directory get-assignment-name)
+         (only-in "private/main-params.rkt" timeout-control get-user-assignment-directory get-assignment-name)
          "private/run-status.rkt"
          "private/config.rkt"
          "private/logger.rkt"

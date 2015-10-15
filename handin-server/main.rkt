@@ -12,6 +12,7 @@
          "private/reloadable.rkt"
          "private/hooker.rkt"
          "private/userdb.rkt"
+         "private/main-params.rkt"
          (prefix-in web: "web-status-server.rkt")
          ;; this sets some global parameter values, and this needs
          ;; to be done in the main thread, rather than later in a
@@ -162,14 +163,6 @@
 (define (users->dirname users)
   (apply string-append (car users)
          (map (lambda (u) (string-append "+" u)) (cdr users))))
-
-(provide get-user-assignment-directory)
-(define user-assignment-directory (make-parameter #f))
-(define (get-user-assignment-directory) (user-assignment-directory))
-
-(provide get-assignment-name)
-(define assignment-name (make-parameter #f))
-(define (get-assignment-name) (assignment-name))
 
 (define (accept-specific-submission data r r-safe w)
   ;; Note: users are always sorted
@@ -529,12 +522,6 @@
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define no-limit-warning? #f) ; will be set to #t if no memory limits
-
-(define current-timeout-control (make-parameter #f))
-(provide timeout-control)
-(define (timeout-control msg)
-  (log-line "timeout-control: ~s" msg)
-  ((current-timeout-control) msg))
 
 (define (with-watcher w proc)
   (define session-cust (make-custodian))
