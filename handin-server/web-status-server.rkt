@@ -18,6 +18,7 @@
          handin-server/private/config
          handin-server/private/hooker
          handin-server/private/userdb
+         handin-server/format-grade
          "run-servlet.rkt")
 
 ;; Looks up key in alist, returns #f if not found.
@@ -174,36 +175,6 @@
                               (lambda ()
                                 (read-string (file-size filename)))))))])
     (or grade "--")))
-
-;; check whether something is a filled grading scheme marked as finished
-(define (finished-grading-scheme? entries)
-  (and (list? entries)
-       (for/and ([entry (in-list entries)])
-         (and (list? entry)
-              (or (and (string? (first entry))
-                       (number? (second entry)))
-                  (and (symbol? (first entry))
-                       (symbol=? (first entry) 'grading-finished)
-                       (second entry)))))
-       (for/or ([entry (in-list entries)])
-         (and (list? entry)
-              (symbol? (first entry))
-              (symbol=? (first entry) 'grading-finished)))))
-
-;; convert filled grading scheme to definition list xexpr
-(define (format-grade-details entries)
-  (if (list? entries)
-    `((dl ,@(for/list ([entry (in-list entries)]
-                      #:when (string? (first entry))
-                      [child (in-list (list `(dt ,(first entry)) `(dd ,(number->string (second entry)))))])
-             child)))
-    `()))
-
-;; compute total grade based on filled grading scheme
-(define (grading-scheme-total entries)
-  (for/sum ([entry (in-list entries)]
-            #:when (string? (first entry)))
-    (second entry)))
 
 ;; Load sum of grades and detailed grades from grade.rktd file for handin hi of user
 ;; (falling back to grade file for the sum and #f for the details)
