@@ -11,7 +11,13 @@
 (provide (all-defined-out))
 
 ;; A grading table is the result of reading a `grade.rktd`-like file.
-;; A valid grading table is a list of two-element lists.
+;; A complete grading table is a list of entries, represented as two-element lists. For each entry.
+;; 1. Either the first element is symbol 'grading-finished and the second is #true.
+;; 2. Or the first element is a string and the second is a number.
+;; The 'grading-finished entry must be present.
+;;
+;; Tutors should ensure that grading tables are only complete (according to the above definition)
+;; when they're sure of the grading enough to show it to students.
 ;; 
 
 ;; check whether something is a filled grading scheme marked as finished
