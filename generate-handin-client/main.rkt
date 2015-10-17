@@ -23,6 +23,15 @@
     [else
      (raise-user-error 'copy "missing ~a (in file ~a)" name source)]))
 
+(define (append-file desc source target)
+  (call-with-input-file* source
+    (λ (src-port)
+      (call-with-output-file*
+       target #:exists 'append
+       (λ (tgt-port)
+         (printf "appending ~a from ~a to ~a~n" desc source target)
+         (copy-port src-port tgt-port))))))
+
 ; Where to copy the handin-client from
 (define source-dir
   (collection-path "handin-client"))
@@ -194,6 +203,12 @@
        [source (build-path conf-dir file)]
        [target (build-path collection-dir file)])
   (copy "SSL certificate" source target))
+; Append root certificate
+(let* ([file "root-cert.pem"]
+       [source (build-path conf-dir file)]
+       [target (build-path collection-dir file)])
+  (when (file-exists? source)
+    (append-file "SSL root certificate" source target)))
 
 ; Delete compiled code
 ; (I would prefer to use #:source #t below, but it raises an exception)
