@@ -42,10 +42,11 @@
 ;; Output: an xexpr
 (define (format-grade-details entries)
   (if (list? entries)
-    `((dl ,@(for/list ([entry (in-list entries)]
-                      #:when (string? (first entry))
-                      [child (in-list (list `(dt ,(first entry)) `(dd ,(number->string (second entry)))))])
-             child)))
+    `((table ([class "grading"])
+       ,@(for/list
+                   ([entry (in-list entries)]
+                    #:when (string? (first entry)))
+                    `(tr (td ,(number->string (second entry))) (td ,(first entry))))))
     `()))
 
 ;; compute total grade based on filled grading scheme
