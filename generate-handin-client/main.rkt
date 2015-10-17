@@ -202,13 +202,13 @@
 (let* ([file "server-cert.pem"]
        [source (build-path conf-dir file)]
        [target (build-path collection-dir file)])
-  (copy "SSL certificate" source target))
-; Append root certificate
-(let* ([file "root-cert.pem"]
-       [source (build-path conf-dir file)]
-       [target (build-path collection-dir file)])
-  (when (file-exists? source)
-    (append-file "SSL root certificate" source target)))
+  (copy "SSL certificate" source target)
+
+  ; Append root certificate
+  (let* ([root-cert-file "root-cert.pem"]
+         [root-cert-source (build-path conf-dir root-cert-file)])
+    (when (file-exists? root-cert-source)
+      (append-file "SSL root certificate" root-cert-source target))))
 
 ; Delete compiled code
 ; (I would prefer to use #:source #t below, but it raises an exception)
