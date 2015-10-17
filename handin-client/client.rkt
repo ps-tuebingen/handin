@@ -43,7 +43,7 @@
           (let* ([msg
                   "handin-connect: could not connect to the server (~a:~a)"]
                  [msg (format msg server port)]
-                 ; un-comment to get the full message too
+                 ; show full message too
                  [msg (string-append msg " (" (exn-message e) ")")])
             (raise (make-exn:fail:network msg (exn-continuation-marks e)))))])
     (ssl-connect server port ctx)))
