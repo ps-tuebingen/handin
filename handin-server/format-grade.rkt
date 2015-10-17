@@ -18,7 +18,7 @@
 ;;
 ;; Tutors should ensure that grading tables are only complete (according to the above definition)
 ;; when they're sure of the grading enough to show it to students.
-;; 
+;;
 
 ;; check whether something is a filled grading scheme marked as finished
 ;; Input: a grading table
