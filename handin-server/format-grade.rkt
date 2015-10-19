@@ -42,7 +42,7 @@
 ;; Output: an xexpr
 (define (format-grade-details entries)
   (if (list? entries)
-    `((table ([class "grading"])
+    `((table ([class "grading-scheme"])
        ,@(for/list
                    ([entry (in-list entries)]
                     #:when (string? (first entry)))
