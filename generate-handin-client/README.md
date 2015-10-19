@@ -47,7 +47,7 @@ This step adds a link to the checkout, so changes are integrated automatically.
 2. If Racket complains that `handin` is already installed, remove it with `raco
    pkg remove --no-trash handin`.
 
-## Generate configs
+## Generate plugins packages for distribution
 
 1.  Go to your `handin-config` directory, where you have the configuration file `config.rktd`:
 
@@ -65,5 +65,31 @@ will be the `client-name` from `config.rktd`.
 
 You don't need to adjust `${PATH_TO_HANDIN}/handin-client/info.rkt`. It will be
 regenerated with the information from `config.rktd`.
+
+## Generating plugin directory for local use
+
+1.  Go to your `handin-config` directory:
+    ```sh
+    cd handin-config
+    ```
+
+2.  Run this tool with:
+    ```sh
+    racket -l generate-handin-client -- --local
+    ```
+
+    This will create a `utue-info1-ws15-local` folder.
+
+3.  For the first install, expose this folder to Racket via:
+
+    ```sh
+    raco pkg install ./utue-info1-ws15-local
+    ```
+
+    later, if wanted, you *can* but *needn't* update compiled code and docs via:
+
+    ```sh
+    raco pkg update ./utue-info1-ws15-local
+    ```
 
 [1]: http://pkg-build.racket-lang.org/doc/handin-server/server-setup.html

@@ -4,6 +4,11 @@
 (require setup/getinfo)
 (require srfi/54)
 
+(define local-mode (make-parameter #f))
+(command-line
+ #:once-each
+ [("--local") "Leave unpacked for local use" (local-mode #t)])
+
 ; print something in a style that works for #lang setup/infotab
 (define (print-info v)
   (cond
@@ -116,6 +121,8 @@
   (get-conf 'icon-server icon-fallback))
 
 ; Create package directory
+(printf "deleting existing package directory ~a (if present)~n" package-dir)
+(delete-directory/files package-dir #:must-exist? #f)
 (printf "creating package directory ~a~n" package-dir)
 (make-directory package-dir)
 
@@ -210,19 +217,21 @@
     (when (file-exists? root-cert-source)
       (append-file "SSL root certificate" root-cert-source target))))
 
-; Delete compiled code
+; Delete compiled code, because it was invalidated by changing the package name.
+; Testing in local-mode shows that Racket won't recognize the problem.
 ; (I would prefer to use #:source #t below, but it raises an exception)
 (printf "cleaning package source~n")
 (delete-directory/files (build-path collection-dir "compiled"))
 
-; Create package
-(pkg-create-command
+(unless (local-mode)
+  ; Create package
+  (pkg-create-command
    #:format 'zip
    #:from-dir #t
    #:dest target-dir
    package-dir)
 
-; Delete configured package source
-(printf "deleting package source~n")
-(when (directory-exists? package-dir)
-  (delete-directory/files package-dir))
+  ; Delete configured package source
+  (printf "deleting package source~n")
+  (when (directory-exists? package-dir)
+    (delete-directory/files package-dir)))
