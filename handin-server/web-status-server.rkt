@@ -94,7 +94,8 @@
           (directory-list dir)))))
 
 (define (blacklisted? f)
-  (or (member f (list "grade" "grade.rktd" "grade-prefilled.rktd" "result.png"))))
+  (or (member f (list "grade" "grade.rktd" "grade-prefilled.rktd" "result.png"))
+      (regexp-match? #rx"~$" f)))
 
 ;; Display links to all files user handed in for hi
 ;; and/or links to upload such files now.
