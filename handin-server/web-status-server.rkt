@@ -93,35 +93,35 @@
                    (build-path dir d))))
           (directory-list dir)))))
 
+(define (blacklisted? f)
+  (or (member f (list "grade" "grade.rktd" "grade-prefilled.rktd" "result.png"))
+      (regexp-match? #rx"~$" f)))
+
 ;; Display links to all files user handed in for hi
 ;; and/or links to upload such files now.
 (define (handin-link k user hi upload-suffixes)
   (let* ([dir (find-handin-entry hi user)]
          [image (and dir (build-path dir "result.png"))]
-         [l (and dir (with-handlers ([exn:fail? (lambda (x) null)])
-                       (parameterize ([current-directory dir])
-                         (sort (filter (lambda (f)
-                                         (and (not (equal? f "grade"))
-                                              (not (equal? f "grade.rktd"))
-                                              (not (equal? f "grade-prefilled.rktd"))
-                                              (not (equal? f "result.png"))
-                                              (file-exists? f)))
-                                       (map path->string (directory-list)))
-                               string<?))))]
+         [l (if dir (with-handlers ([exn:fail? (lambda (x) null)])
+                      (parameterize ([current-directory dir])
+                        (sort (filter (lambda (f)
+                                        (and (not (blacklisted? f))
+                                             (file-exists? f)))
+                                      (map path->string (directory-list)))
+                              string<?)))
+                null)]
          [handins (append
 
-                    ; links to handins
-                    (if (pair? l)
-                        (map (lambda (f)
-                               (let ([hi (build-path dir f)])
-                                 `(li (a ([href ,(make-k k (relativize-path hi))]) ,f)
-                                   " ("
-                                   ,(date->string
-                                     (seconds->date (file-or-directory-modify-seconds hi))
-                                     (date-display-format 'german))
-                                   ")")))
-                             l)
-                        null)
+                   ; links to handins
+                   (map (lambda (f)
+                          (let ([hi (build-path dir f)])
+                            `(li (a ([href ,(make-k k (relativize-path hi))]) ,f)
+                                 " ("
+                                 ,(date->string
+                                   (seconds->date (file-or-directory-modify-seconds hi))
+                                   (date-display-format 'german))
+                                 ")")))
+                        l)
                     
                     ; links to uploaded pictures
                     (if (and image (file-exists? image))
