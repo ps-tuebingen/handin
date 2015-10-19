@@ -114,25 +114,22 @@
                 null)]
          [handins (append
 
-                   ; links to handins
+                   ; links to handins & uploaded pictures
                    (map (lambda (f)
-                          (let ([hi (build-path dir f)])
-                            `(li (a ([href ,(make-k k (relativize-path hi))]) ,f)
-                                 " ("
-                                 ,(date->string
-                                   (seconds->date (file-or-directory-modify-seconds hi))
-                                   (date-display-format 'german))
-                                 ")")))
-                        (filter-not is-image-path? l))
-
-                   ; links to uploaded pictures
-                   (map
-                    (lambda (image)
-                      (let* ([image-path (build-path dir image)]
-                             [image-k (make-k k (relativize-path image-path))])
-                        `(li (a ([href ,image-k])
-                                      (img ([src ,image-k]))))))
-                      (filter is-image-path? l))
+                          (let* ([hi (build-path dir f)]
+                                 [is-image? (is-image-path? f)]
+                                 [f-k (make-k k (relativize-path hi))])
+                            `(li (a ([href ,f-k])
+                                    ,@(if is-image? `(,f (img ([src ,f-k]))) `(,f)))
+                                 ,@(if
+                                    is-image?
+                                    null
+                                    `(" ("
+                                      ,(date->string
+                                        (seconds->date (file-or-directory-modify-seconds hi))
+                                        (date-display-format 'german))
+                                      ")")))))
+                        l)
                     
                     ; links to upload handins now
                     (if upload-suffixes
