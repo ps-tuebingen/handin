@@ -93,6 +93,9 @@
                    (build-path dir d))))
           (directory-list dir)))))
 
+(define (blacklisted? f)
+  (or (member f (list "grade" "grade.rktd" "grade-prefilled.rktd" "result.png"))))
+
 ;; Display links to all files user handed in for hi
 ;; and/or links to upload such files now.
 (define (handin-link k user hi upload-suffixes)
@@ -101,10 +104,7 @@
          [l (and dir (with-handlers ([exn:fail? (lambda (x) null)])
                        (parameterize ([current-directory dir])
                          (sort (filter (lambda (f)
-                                         (and (not (equal? f "grade"))
-                                              (not (equal? f "grade.rktd"))
-                                              (not (equal? f "grade-prefilled.rktd"))
-                                              (not (equal? f "result.png"))
+                                         (and (not (blacklisted? f))
                                               (file-exists? f)))
                                        (map path->string (directory-list)))
                                string<?))))]
