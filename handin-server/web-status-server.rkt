@@ -94,14 +94,16 @@
           (directory-list dir)))))
 
 (define (blacklisted? f)
-  (or (member f (list "grade" "grade.rktd" "grade-prefilled.rktd" "result.png"))
+  (or (member f (list "grade" "grade.rktd" "grade-prefilled.rktd"))
       (regexp-match? #rx"~$" f)))
+
+(define (is-image-path? f)
+  (regexp-match? #rx"\\.png$" f))
 
 ;; Display links to all files user handed in for hi
 ;; and/or links to upload such files now.
 (define (handin-link k user hi upload-suffixes)
   (let* ([dir (find-handin-entry hi user)]
-         [image (and dir (build-path dir "result.png"))]
          [l (if dir (with-handlers ([exn:fail? (lambda (x) null)])
                       (parameterize ([current-directory dir])
                         (sort (filter (lambda (f)
@@ -112,23 +114,22 @@
                 null)]
          [handins (append
 
-                   ; links to handins
+                   ; links to handins & uploaded pictures
                    (map (lambda (f)
-                          (let ([hi (build-path dir f)])
-                            `(li (a ([href ,(make-k k (relativize-path hi))]) ,f)
-                                 " ("
-                                 ,(date->string
-                                   (seconds->date (file-or-directory-modify-seconds hi))
-                                   (date-display-format 'german))
-                                 ")")))
+                          (let* ([hi (build-path dir f)]
+                                 [is-image? (is-image-path? f)]
+                                 [f-k (make-k k (relativize-path hi))])
+                            `(li (a ([href ,f-k])
+                                    ,@(if is-image? `(,f (img ([src ,f-k]))) `(,f)))
+                                 ,@(if
+                                    is-image?
+                                    null
+                                    `(" ("
+                                      ,(date->string
+                                        (seconds->date (file-or-directory-modify-seconds hi))
+                                        (date-display-format 'german))
+                                      ")")))))
                         l)
-                    
-                    ; links to uploaded pictures
-                    (if (and image (file-exists? image))
-                        (let ([image-k (make-k k (relativize-path image))])
-                          (list `(li (a ([href ,image-k])
-                                        (img ([src ,image-k]))))))
-                        null)
                     
                     ; links to upload handins now
                     (if upload-suffixes
