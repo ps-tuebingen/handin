@@ -104,13 +104,14 @@
 ;; and/or links to upload such files now.
 (define (handin-link k user hi upload-suffixes)
   (let* ([dir (find-handin-entry hi user)]
-         [l (if dir (with-handlers ([exn:fail? (lambda (x) null)])
-                      (parameterize ([current-directory dir])
-                        (sort (filter (lambda (f)
-                                        (and (not (blacklisted? f))
-                                             (file-exists? f)))
-                                      (map path->string (directory-list)))
-                              string<?)))
+         [l (if dir
+                (with-handlers ([exn:fail? (lambda (x) null)])
+                  (parameterize ([current-directory dir])
+                    (sort (filter (lambda (f)
+                                    (and (not (blacklisted? f))
+                                         (file-exists? f)))
+                                  (map path->string (directory-list)))
+                          string<?)))
                 null)]
          [handins (append
 
