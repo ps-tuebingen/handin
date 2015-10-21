@@ -185,9 +185,7 @@
          [grade (and dir
                      (let ([filename (build-path dir "grade.rktd")])
                        (and (file-exists? filename)
-                            (with-input-from-file filename
-                              (lambda ()
-                                (read))))))])
+                            (call-with-input-file* filename read))))])
     (if (finished-grading-scheme? grade)
       (values (number->string (grading-scheme-total grade)) grade)
       (values (handin-grade user hi) #f))))
