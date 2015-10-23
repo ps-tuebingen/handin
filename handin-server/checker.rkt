@@ -3,7 +3,7 @@
 (require (only-in 2htdp/image image?))
 
 (require (for-syntax racket/base) "utils.rkt"
-         racket/file racket/class racket/gui/base)
+         racket/file racket/class racket/promise racket/gui/base)
 
 (provide (except-out (all-from-out racket/base) #%module-begin)
          (all-from-out "utils.rkt"))
@@ -26,7 +26,7 @@
 (define (error* fmt . args)
   (error (apply format fmt args)))
 
-(define fields (map car (get-conf 'extra-fields)))
+(define fields (delay (map car (get-conf 'extra-fields))))
 
 (provide submission-dir)
 (define submission-dir-re
@@ -50,7 +50,7 @@
 (provide user-substs)
 (define (user-substs user str)
   (subst str `(("username" . ,user) ("submission" . ,submission-dir)
-               ,@(map cons fields (user-data user)))))
+               ,@(map cons (force fields) (user-data user)))))
 
 (define (subst str substs)
   (if (list? str)
