@@ -8,6 +8,7 @@
          racket/port
          racket/local
          racket/bool
+         racket/function
          xml
          net/uri-codec
          web-server/servlet
@@ -185,7 +186,8 @@
          [grade (and dir
                      (let ([filename (build-path dir "grade.rktd")])
                        (and (file-exists? filename)
-                            (call-with-input-file* filename read))))])
+                            (with-handlers ([exn:fail? (const #f)])
+                              (call-with-input-file* filename read)))))])
     (if (finished-grading-scheme? grade)
       (values (number->string (grading-scheme-total grade)) grade)
       (values (handin-grade user hi) #f))))
