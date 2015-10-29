@@ -7,19 +7,19 @@
 (require (only-in handin-server/utils get-assignment-name))
 
 (provide check-deadline
-         check-max-submissions 
-         
+         check-max-submissions
+
          update-submission-timestamp!
-         get-submission-timestamp         
-         
+         get-submission-timestamp
+
          set-test-max-score!
          score-add-penalty!
-         
-         add-report-line!         
-         with-output-to-report         
+
+         add-report-line!
+         with-output-to-report
          add-score-to-report!
          write-report
-         
+
          @test
          @test/exn)
 
@@ -61,7 +61,7 @@
   (let ([cur-submission-timestamp (thread-cell-ref submission-timestamp)])
     (if cur-submission-timestamp
         (unbox cur-submission-timestamp)
-        #f)))  
+        #f)))
 
 (define (add-score-to-report!)
   (add-report-line! (format "Final Score: ~a out of ~a"
@@ -77,7 +77,7 @@
         (set-box! cur (append (unbox cur) new))
         (thread-cell-set! report-lines (box new)))))
 
-(define (get-report-delay-in-minutes) 
+(define (get-report-delay-in-minutes)
   (with-handlers ([exn? (thunk* 0)])
     (get-conf 'report-delay-in-minutes)))
 
@@ -94,16 +94,16 @@
               (lambda ()
                 (for-each (lambda (str) (printf "~a\n" str))
                           (cond [(thread-cell-ref report-lines) => unbox]
-                                [else '()])))))  
+                                [else '()])))))
            (define report-string (report->string users))
            (define report-delay (get-report-delay-in-minutes))
            (start-timer (start-timer-manager)
                         (* 60 report-delay)
                         (thunk
                          (with-output-to-file
-                             (build-path dir 
+                             (build-path dir
                                          (format "~a-report-~a.txt"
-                                                 (string-join users "+")                                        
+                                                 (string-join users "+")
                                                  ts))
                            #:exists 'replace
                            (thunk (display report-string)))))
@@ -123,7 +123,7 @@
 
 (define (check-deadline)
   (define dir-name (get-assignment-name))
-  (set-run-status "Checking submission against deadline")  
+  (set-run-status "Checking submission against deadline")
   (define-values (deadline deadline+late-days) (get-deadline-seconds dir-name))
   (define now (current-seconds))
   (when (and deadline (> now deadline))
@@ -136,7 +136,7 @@
 
 (define (successful-submissions)
   ;; Find the number of SUCCESS-? dirs in the user directory
-  (let ([dirlist (map path->string (directory-list ".."))])      
+  (let ([dirlist (map path->string (directory-list ".."))])
     (length (filter (lambda (d)
                       (and (directory-exists? (string->path (format "../~a" d)))
                            (regexp-match SUCCESS-RE d)))
@@ -145,7 +145,7 @@
 (define (check-max-submissions)
   (define dir-name (get-assignment-name))
   (set-run-status "Checking against maximum number of submissions")
-  (let ([max-submissions-conf (assoc dir-name (get-conf 'max-submissions))])      
+  (let ([max-submissions-conf (assoc dir-name (get-conf 'max-submissions))])
     ;; setting max-submissions <= 0 means unlimited submissions
     (when max-submissions-conf
       (let ([max-submissions (second max-submissions-conf)]
@@ -163,7 +163,7 @@
 
 (define-syntax with-output-to-report
   (syntax-rules ()
-    [(_ expr ...)     
+    [(_ expr ...)
      (let ([output-port (open-output-string)])
        (parameterize ([current-output-port output-port])
          (call-with-values
@@ -177,10 +177,10 @@
   (syntax-rules ()
     [(_ test-desc error-desc expr result penalty)
      (@test test-desc error-desc expr result equal? penalty)]
-    
+
     [(_ test-desc error-desc expr result equal? penalty)
      (with-handlers
-         ([exn? (λ (exn) 
+         ([exn? (λ (exn)
                   (with-output-to-report
                    (displayln (exn-message exn))
                    (score-add-penalty! penalty)
@@ -194,7 +194,7 @@
   (syntax-rules ()
     [(_ test-desc expr penalty)
      (with-handlers
-         ([exn? (λ (exn) 
+         ([exn? (λ (exn)
                   (with-output-to-report
                    (display (exn-message exn))
                    (score-add-penalty! penalty)

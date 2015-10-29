@@ -705,7 +705,7 @@
          [mbm2 (and (send bm get-loaded-mask)
                     (make-object bitmap% new-w new-h))]
          [mdc (make-object bitmap-dc% bm2)])
-    (send mdc draw-bitmap-section-smooth bm 
+    (send mdc draw-bitmap-section-smooth bm
           0 0 new-w new-h
           0 0 w h)
     (send mdc set-bitmap #f)

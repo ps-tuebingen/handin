@@ -230,7 +230,7 @@
                                  'checker)))])
           (parameterize ([user-assignment-directory (path->complete-path (build-path 'same))]
                          [assignment-name assignment])
-            (define-values (pre checker post)            
+            (define-values (pre checker post)
               (cond [(not checker*) (values #f #f #f)]
                     [(procedure? checker*) (values #f checker* #f)]
                     [(and (list? checker*) (= 3 (length checker*)))
