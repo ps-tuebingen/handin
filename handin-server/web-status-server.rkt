@@ -68,8 +68,8 @@
 ;; k should eventually call handle-status-request.
 (define (make-k k tag #:mode [mode "download"])
   (let ([sep (if (regexp-match? #rx"^[^#]*[?]" k) "&" "?")])
-    (format "~a~atag=~a~amode=~a" 
-            k 
+    (format "~a~atag=~a~amode=~a"
+            k
             sep
             (uri-encode tag)
             ";"
@@ -132,10 +132,10 @@
                                         (date-display-format 'german))
                                       ")")))))
                         l)
-                    
+
                     ; links to upload handins now
                     (if upload-suffixes
-                        (let ([dir (or dir 
+                        (let ([dir (or dir
                               (build-path (assignment<->dir hi) user))])
                           (list `(li (a ([href ,(make-k k (relativize-path dir) #:mode "upload")])
                                "Upload..."))))
@@ -356,12 +356,12 @@ Ort:  Raum VB N3, Morgenstelle")
                               (input ([type "submit"] [name "post"]
                                       [value "Upload"]))))))
         `(p "The uploaded file will replace any existing file with the same name.")
-        `(p "Allowed file extensions:" 
+        `(p "Allowed file extensions:"
             ,@(for/list ([s (in-list suffixes)]
                          [n (in-naturals)])
                 `(span " " (tt ,(bytes->string/utf-8 s))))
             ". "
-            "If the uploaded file has no extension or a different extension, " 
+            "If the uploaded file has no extension or a different extension, "
             (tt ,(bytes->string/utf-8 (first suffixes))) " is added automatically.")))))
   (let ([fb (for/first ([b (in-list (request-bindings/raw next))]
                         #:when (binding:file? b))
@@ -381,7 +381,7 @@ Ort:  Raum VB N3, Morgenstelle")
           (unless (check fn `(,who *) #t #f)
             (error 'download "bad upload access for ~s: ~a" who fn))
           (make-directory* hw-dir)
-          (with-output-to-file 
+          (with-output-to-file
               fn
               #:exists 'truncate/replace
               (lambda () (display (binding:file-content fb))))
