@@ -96,7 +96,13 @@
 
 (define (blacklisted? f)
   (or (member f (list "grade" "grade.rktd" "grade-prefilled.rktd"))
-      (regexp-match? #rx"~$" f)))
+      (regexp-match? #rx"^\\..*\\.swp$|~$|^#.*#$|^.DS_Store$" f)))
+(module+ test
+  (check-true (blacklisted? ".o.swp"))
+  (check-true (blacklisted? "a~"))
+  (check-true (blacklisted? "#afo#"))
+  (check-false (blacklisted? "#afo"))
+  (check-false (blacklisted? "afo#")))
 
 (define (is-image-path? f)
   (regexp-match? #rx"\\.png$" f))
