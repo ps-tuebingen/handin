@@ -21,7 +21,9 @@
 (define (read-grading-scheme filename)
   (and (file-exists? filename)
        (with-handlers ([exn:fail? (const #f)])
-         (call-with-input-file* filename read))))
+         (call-with-input-file* filename
+           (λ (input-port)
+             (read input-port))))))
 
 ;; check whether something is a filled grading scheme marked as finished
 ;; Input: a grading table
