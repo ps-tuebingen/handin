@@ -1,12 +1,6 @@
 #lang racket/base
 
 (require racket/list
-         racket/path
-         racket/file
-         racket/date
-         racket/string
-         racket/port
-         racket/local
          racket/bool)
 (provide (all-defined-out))
 
