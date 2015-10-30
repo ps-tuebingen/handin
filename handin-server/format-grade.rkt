@@ -23,6 +23,10 @@
        (with-handlers ([exn:fail? (const #f)])
          (call-with-input-file* filename
            (λ (input-port)
+             ; Workaround Racket bug https://github.com/racket/racket/issues/1114
+             (when (equal? (peek-char input-port) #\uFEFF)
+               (read-char input-port))
+
              (read input-port))))))
 
 ;; check whether something is a filled grading scheme marked as finished
