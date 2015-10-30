@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require racket/list
+         racket/function
          racket/bool)
 (provide (all-defined-out))
 
@@ -13,6 +14,14 @@
 ;; Tutors should ensure that grading tables are only complete (according to the above definition)
 ;; when they're sure of the grading enough to show it to students.
 ;;
+
+;; Deserialized a grade.rktd file.
+; Filename -> GradingTable or #f
+;; Input: a filename
+(define (read-grading-scheme filename)
+  (and (file-exists? filename)
+       (with-handlers ([exn:fail? (const #f)])
+         (call-with-input-file* filename read))))
 
 ;; check whether something is a filled grading scheme marked as finished
 ;; Input: a grading table

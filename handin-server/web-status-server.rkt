@@ -190,10 +190,7 @@
 (define (handin-grade/details user hi)
   (let* ([dir (find-handin-entry hi user)]
          [grade (and dir
-                     (let ([filename (build-path dir "grade.rktd")])
-                       (and (file-exists? filename)
-                            (with-handlers ([exn:fail? (const #f)])
-                              (call-with-input-file* filename read)))))])
+                     (read-grading-scheme (build-path dir "grade.rktd")))])
     (if (finished-grading-scheme? grade)
       (values (number->string (grading-scheme-total grade)) grade)
       (values (handin-grade user hi) #f))))
