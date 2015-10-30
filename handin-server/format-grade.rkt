@@ -66,6 +66,14 @@
             #:when (string? (first entry)))
     (second entry)))
 
+;; compute total grade from filename of the .rktd file
+;; Input: filename
+;; Output: a total grade, or #f in case of any errors.
+(define (filename->grading-scheme-total filename)
+  (define entries (read-grading-scheme filename))
+  (and entries
+       (finished-grading-scheme? entries)
+       (grading-scheme-total entries)))
 
 (module+ test
   (require rackunit)
