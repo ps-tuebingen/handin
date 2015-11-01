@@ -1,6 +1,6 @@
 update () {
   git checkout $1
-  git pull
+  git pull --ff-only
 }
 
 merge() {
