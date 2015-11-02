@@ -267,13 +267,14 @@
                          (set! continue-abort? #t) (send d show #f))))))
 
     (define interface-widgets
-      (list ok username passwd assignment retrieve?))
+      (list ok cancel username passwd assignment retrieve?))
     (define (disable-interface)
       (for ([x (in-list interface-widgets)]) (send x enable #f)))
     (define (enable-interface)
       (for ([x (in-list interface-widgets)]) (send x enable #t) ))
     (define (done-interface)
       (send cancel set-label "Close")
+      (send cancel enable #t)
       (send cancel focus))
 
     (define (report-error tag exn)
