@@ -185,7 +185,15 @@
        (lambda ()
          (when abort-commit-dialog (send abort-commit-dialog show #f))
          ; Using `'(ok caution)` below is not necessarily right, we should get info from the client.
-         (message-box "Handin" (string-append final-message "\n" intermediate-message) this '(ok caution))
+         (message-box "Handin"
+                      (string-append (if (equal? final-message "Handin successful.")
+                                         ; XXX Translate default message to German.
+                                         "Erfolgreiche Abgabe!"
+                                         final-message)
+                                     "\n"
+                                     intermediate-message)
+                      this
+                      '(ok caution))
          ; This is hacky; final-message has multiple lines,
          ; but only the first will be shown.
          ; You better start your success message with "Handin saved"
