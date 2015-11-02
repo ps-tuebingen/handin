@@ -158,6 +158,7 @@
 
     (define (submit-file)
       (define final-message "Handin successful.")
+      (define intermediate-message #f)
       (submit-assignment
        connection
        (send username get-value)
@@ -173,12 +174,25 @@
        ;; message/message-final/message-box handlers
        (lambda (msg) (send status set-label msg))
        (lambda (msg) (set! final-message msg))
-       (lambda (msg styles) (message-box "Handin" msg this styles)))
+       (lambda (msg styles)
+         ; XXX This is is a total hack abusing the protocol :-(.
+         (if (equal? styles '(ok caution))
+             (begin
+               (set! intermediate-message msg)
+               'ok)
+             (message-box "Handin" msg this styles))))
       (queue-callback
        (lambda ()
          (when abort-commit-dialog (send abort-commit-dialog show #f))
          ; Using `'(ok caution)` below is not necessarily right, we should get info from the client.
-         (message-box "Handin" final-message this '(ok caution))
+         (message-box "Handin"
+                      (string-append
+                       final-message
+                       (if intermediate-message
+                           (string-append "\n\n" intermediate-message)
+                           ""))
+                      this
+                      '(ok caution))
          ; This is hacky; final-message has multiple lines,
          ; but only the first will be shown.
          ; You better start your success message with "Handin saved"
