@@ -157,6 +157,7 @@
            [style (if mode '(deleted) '())]))
 
     (define (submit-file)
+      ; XXX This should be in English for coherence with its context.
       (define final-message "Handin successful.")
       (define intermediate-message #f)
       (submit-assignment
@@ -187,7 +188,11 @@
          ; Using `'(ok caution)` below is not necessarily right, we should get info from the client.
          (message-box "Handin"
                       (string-append
-                       final-message
+                       (if (equal? final-message "Handin successful.")
+                                         ; XXX This should be in German for coherence with its context.
+                                         ; XXX Translate default message to German.
+                                         "Erfolgreiche Abgabe!"
+                                         final-message)
                        (if intermediate-message
                            (string-append "\n\n" intermediate-message)
                            ""))
