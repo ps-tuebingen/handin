@@ -3,8 +3,10 @@
 (require racket/list
          racket/function
          racket/bool
-         racket/match)
+         racket/match
+         )
 
+(require unstable/list)
 (require math/statistics)
 
 (require "../handin-server/format-grade.rkt")
@@ -13,6 +15,7 @@
 
 (define args (current-command-line-arguments))
 
+; GradingScheme -> Bool
 (define (erroneous-grading-scheme? entries)
   (or
    (not (list? entries))
@@ -20,6 +23,42 @@
    (and (second (first entries)) ; grading-finished = #t
         (not (finished-grading-scheme? entries)))))
 
+; Point -> Bucket
+(define (points->bucket points)
+  (cond [(< points 10) 1]
+        [(< points 20) 2]
+        [(< points 30) 3]
+        [(< points 40) 4]
+        [(< points 50) 5]
+        [(< points 60) 6]
+        [(< points 70) 7]
+        [(< points 80) 8]
+        [(< points 90) 9]
+        [else 10]))
+
+; Bucket -> String
+(define (bucket-name bucket)
+  (cond [(= bucket 1) "<10"]
+        [(= bucket 2) "10..19"]
+        [(= bucket 3) "20..29"]
+        [(= bucket 4) "30..39"]
+        [(= bucket 5) "40..49"]
+        [(= bucket 6) "50..59"]
+        [(= bucket 7) "60..69"]
+        [(= bucket 8) "70..79"]
+        [(= bucket 9) "80..89"]
+        [(= bucket 10) ">90"]))
+
+; (List-of GradingScheme) -> (List-Of (Cons Bucket Number))
+(define (grade-histogram gs)
+  (let
+      ((scores (map grading-scheme-total gs)))
+    (map (lambda (xs) (cons (bucket-name (points->bucket (first xs))) (length xs)))
+         (sort (group-by points->bucket scores) (lambda (x y) (< (first x) (first y)))))))
+  
+        
+
+; Path -> (List-Of Path)
 (define (find-all-grade-files dir-or-file max-depth)
  (if (<= max-depth 0)
   (list)
@@ -53,10 +92,8 @@
     (filter (lambda (x) (not (finished-grading-scheme? (cdr x))))
           (map (lambda (p) (cons p (read-grading-scheme p))) (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))))
 
-(define (list-grades wd)
-    (for ([ g (all-finished-grading-schemes wd)])
-      (display (format "~a\n" (grading-scheme-total g)))))
 
+; Path -> Path
 (define (get-user-name-from-path p)
   (let* ((path-components (explode-path p))
          (numOfPC (length path-components)))
@@ -72,6 +109,10 @@
         (display (format "~a " (get-user-name-from-path p))))
       (newline))))
 
+
+(define (list-grades wd)
+    (for ([ g (all-finished-grading-schemes wd)])
+      (display (format "~a\n" (grading-scheme-total g)))))
 
 (define (list-erroneous wd)
   (let ((erroneous (all-erroneous-grading-schemes wd)))
@@ -89,8 +130,12 @@
       (display (format "Median score: ~a\n" (median < scores)))
       )))
 
+(define (histo wd)
+   (for [( q (grade-histogram (all-finished-grading-schemes wd)))]
+     (display (format "Point range ~a : ~a \n" (car q) (cdr q)))))
+
 (define (usage)
-  (display "usage: racket format-grade.rkt (stats|list|unfinished|erroneous) path\n"))
+  (display "usage: racket format-grade.rkt (stats|list|unfinished|erroneous|histogram) path\n"))
 
 (if (< (vector-length args) 2)
     (begin
@@ -113,6 +158,7 @@
   ["stats" (stats working-directory)]
   ["list" (list-grades working-directory)]
   ["unfinished" (list-unfinished working-directory)]      
-  ["erroneous" (list-erroneous working-directory)]      
+  ["erroneous" (list-erroneous working-directory)]
+  ["histogram" (histo working-directory)]
   [else (usage)])
 
