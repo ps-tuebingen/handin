@@ -90,7 +90,7 @@
       )))
 
 (define (usage)
-  (display "usage: racket format-grade.rkt (average|list|unfinished) path\n"))
+  (display "usage: racket format-grade.rkt (stats|list|unfinished|erroneous) path\n"))
 
 (if (< (vector-length args) 2)
     (begin
