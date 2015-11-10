@@ -55,8 +55,8 @@
       ((scores (map grading-scheme-total gs)))
     (map (lambda (xs) (cons (bucket-name (points->bucket (first xs))) (length xs)))
          (sort (group-by points->bucket scores) (lambda (x y) (< (first x) (first y)))))))
-  
-        
+
+
 
 ; Path -> (List-Of Path)
 (define (find-all-grade-files dir-or-file max-depth)
@@ -85,7 +85,7 @@
   (map car
     (filter (lambda (x) (erroneous-grading-scheme? (cdr x)))
           (map (lambda (p) (cons p (read-grading-scheme p))) (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))))
-  
+
 ; Path -> (List-of Path)
 (define (all-unfinished-grading-schemes wd)
   (map car
@@ -157,8 +157,7 @@
 (match (vector-ref args 0)
   ["stats" (stats working-directory)]
   ["list" (list-grades working-directory)]
-  ["unfinished" (list-unfinished working-directory)]      
+  ["unfinished" (list-unfinished working-directory)]
   ["erroneous" (list-erroneous working-directory)]
   ["histogram" (histo working-directory)]
   [else (usage)])
-
