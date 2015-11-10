@@ -3,8 +3,7 @@
 (require racket/list
          racket/function
          racket/bool
-         racket/match
-         )
+         racket/match)
 
 (require unstable/list)
 (require math/statistics)
@@ -60,16 +59,16 @@
 
 ; Path -> (List-Of Path)
 (define (find-all-grade-files dir-or-file max-depth)
- (if (<= max-depth 0)
-  (list)
-  (if (equal?
-       (string->path GRADE-FILENAME)
-       (let-values
-          ([(_1 filename _2) (split-path dir-or-file)]) filename))
-      (list dir-or-file)
-      (if (directory-exists? dir-or-file)
-          (apply append (map (lambda (p) (find-all-grade-files p (- max-depth 1))) (directory-list dir-or-file #:build? #t)))
-          (list)))))
+  (if (<= max-depth 0)
+      (list)
+      (if (equal?
+           (string->path GRADE-FILENAME)
+           (let-values
+               ([(_1 filename _2) (split-path dir-or-file)]) filename))
+          (list dir-or-file)
+          (if (directory-exists? dir-or-file)
+              (apply append (map (lambda (p) (find-all-grade-files p (- max-depth 1))) (directory-list dir-or-file #:build? #t)))
+              (list)))))
 
 ; Path -> (List-of GradingScheme)
 (define (all-grading-schemes wd)
@@ -108,8 +107,8 @@
 
 
 (define (list-grades wd)
-    (for ([ g (all-finished-grading-schemes wd)])
-      (display (format "~a\n" (grading-scheme-total g)))))
+  (for ([g (all-finished-grading-schemes wd)])
+    (display (format "~a\n" (grading-scheme-total g)))))
 
 (define (list-erroneous wd)
   (let ((erroneous (all-erroneous-grading-schemes wd)))
@@ -124,12 +123,11 @@
     (begin
       (display (format "Number of finished grade files: ~a\n" (length scores)))
       (display (format "Mean score: ~a\n" (mean scores)))
-      (display (format "Median score: ~a\n" (median < scores)))
-      )))
+      (display (format "Median score: ~a\n" (median < scores))))))
 
 (define (histo wd)
-   (for [( q (grade-histogram (all-finished-grading-schemes wd)))]
-     (display (format "Point range ~a : ~a \n" (car q) (cdr q)))))
+  (for [( q (grade-histogram (all-finished-grading-schemes wd)))]
+    (display (format "Point range ~a : ~a \n" (car q) (cdr q)))))
 
 (define (usage)
   (display "usage: racket format-grade.rkt (stats|list|unfinished|erroneous|histogram) path\n"))
@@ -138,18 +136,17 @@
     (begin
       (display "Wrong number of arguments\n")
       (usage)
-      (exit 1)
-      )
+      (exit 1))
     (void))
 
 
 (define working-directory
   (if (directory-exists? (string->path (vector-ref args 1)))
-    (string->path (vector-ref args 1))
-    (begin
-      (display (format "Path not found: ~a\n" (vector-ref args 1)))
-      (usage)
-      (exit 1))))
+      (string->path (vector-ref args 1))
+      (begin
+        (display (format "Path not found: ~a\n" (vector-ref args 1)))
+        (usage)
+        (exit 1))))
 
 (match (vector-ref args 0)
   ["stats" (stats working-directory)]
