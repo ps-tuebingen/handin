@@ -70,13 +70,28 @@
               (apply append (map (lambda (p) (find-all-grade-files p (- max-depth 1))) (directory-list dir-or-file #:build? #t)))
               (list)))))
 
+; Represents a GradingScheme and a StudentName
+(define-struct grade (grading-scheme student-name))
+
 ; Path -> (List-of GradingScheme)
 (define (all-grading-schemes wd)
   (map read-grading-scheme (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
+; Path -> (List-of Grade)
+(define (all-grading-schemes* wd)
+  (map (λ (p)
+         (grade (read-grading-scheme p) (get-user-name-from-path p)))
+       (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
+
 ; Path -> (List-of GradingScheme)
 (define (all-finished-grading-schemes wd)
   (filter finished-grading-scheme? (all-grading-schemes wd)))
+
+; Path -> (List-of GradingRecord)
+(define (all-finished-grading-schemes* wd)
+  (filter (λ (gr)
+            (finished-grading-scheme? (grade-grading-scheme gr)))
+          (all-grading-schemes* wd)))
 
 ; Path -> (List-of Path)
 (define (all-erroneous-grading-schemes wd)
@@ -89,7 +104,7 @@
           (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
 
-; Path -> Path
+; Path -> StudentName
 (define (get-user-name-from-path p)
   (let* ((path-components (explode-path p))
          (numOfPC (length path-components)))
@@ -107,8 +122,12 @@
 
 
 (define (list-grades wd)
-  (for ([g (all-finished-grading-schemes wd)])
-    (display (format "~a\n" (grading-scheme-total g)))))
+  (define finished (all-finished-grading-schemes* wd))
+  (display (format "Total number of finished grading schemes: ~a\n" (length finished)))
+  (for ([g finished])
+    (display (format "~a: ~a\n"
+                     (grade-student-name g)
+                     (grading-scheme-total (grade-grading-scheme g))))))
 
 (define (list-erroneous wd)
   (let ((erroneous (all-erroneous-grading-schemes wd)))
