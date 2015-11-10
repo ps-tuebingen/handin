@@ -5,14 +5,14 @@ course-specific ".plt" file (or package) that students install.
 
 Install the official version of the "handin" package with
 
-  raco pkg install handin
+    raco pkg install handin
 
 or through the "Install Package..." menu item in DrRacket's "File"
 menu.
 
 To install this fork, run instead:
 
-  raco pkg install https://github.com/ps-tuebingen/handin.git
+    raco pkg install https://github.com/ps-tuebingen/handin.git
 
 After installing, see the "Handin Server" documentation that is added
 to the Racket documentation.
