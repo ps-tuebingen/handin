@@ -79,18 +79,15 @@
 (define (all-finished-grading-schemes wd)
   (filter finished-grading-scheme? (all-grading-schemes wd)))
 
-
 ; Path -> (List-of Path)
 (define (all-erroneous-grading-schemes wd)
-  (map car
-    (filter (lambda (x) (erroneous-grading-scheme? (cdr x)))
-          (map (lambda (p) (cons p (read-grading-scheme p))) (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))))
+  (filter (lambda (p) (erroneous-grading-scheme? (read-grading-scheme p)))
+          (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
 ; Path -> (List-of Path)
 (define (all-unfinished-grading-schemes wd)
-  (map car
-    (filter (lambda (x) (not (finished-grading-scheme? (cdr x))))
-          (map (lambda (p) (cons p (read-grading-scheme p))) (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))))
+  (filter (lambda (p) (not (finished-grading-scheme? (read-grading-scheme p))))
+          (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
 
 ; Path -> Path
