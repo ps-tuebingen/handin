@@ -114,7 +114,6 @@
             [on-retrieve 'retrieve]
             [else (error 'handin-frame "bad initial values")]))
 
-    (define status #f)
     (define username
       (new text-field%
            [label "Username:"]
@@ -159,6 +158,7 @@
 
     (define (submit-file)
       (define final-message "Handin successful.")
+      (define intermediate-message #f)
       (submit-assignment
        connection
        (send username get-value)
@@ -174,10 +174,30 @@
        ;; message/message-final/message-box handlers
        (lambda (msg) (send status set-label msg))
        (lambda (msg) (set! final-message msg))
-       (lambda (msg styles) (message-box "Handin" msg this styles)))
+       (lambda (msg styles)
+         ; XXX This is is a total hack abusing the protocol :-(.
+         (if (equal? styles '(ok caution))
+             (begin
+               (set! intermediate-message msg)
+               'ok)
+             (message-box "Handin" msg this styles))))
       (queue-callback
        (lambda ()
          (when abort-commit-dialog (send abort-commit-dialog show #f))
+         ; Using `'(ok caution)` below is not necessarily right, we should get info from the client.
+         (message-box "Handin"
+                      (string-append (if (equal? final-message "Handin successful.")
+                                         ; XXX Translate default message to German.
+                                         "Erfolgreiche Abgabe!"
+                                         final-message)
+                                     "\n"
+                                     intermediate-message)
+                      this
+                      '(ok caution))
+         ; This is hacky; final-message has multiple lines,
+         ; but only the first will be shown.
+         ; You better start your success message with "Handin saved"
+         ; or equivalent on the first line.
          (send status set-label final-message)
          (set! committing? #f)
          (done-interface))))
@@ -238,7 +258,7 @@
         (when go?
           (custodian-shutdown-all comm-cust)
           (show #f))))
-    (set! status
+    (define status
           (new message%
                [label (format "Making secure connection to ~a..." server)]
                [parent this]
@@ -268,13 +288,14 @@
                          (set! continue-abort? #t) (send d show #f))))))
 
     (define interface-widgets
-      (list ok username passwd assignment retrieve?))
+      (list ok cancel username passwd assignment retrieve?))
     (define (disable-interface)
       (for ([x (in-list interface-widgets)]) (send x enable #f)))
     (define (enable-interface)
       (for ([x (in-list interface-widgets)]) (send x enable #t) ))
     (define (done-interface)
       (send cancel set-label "Close")
+      (send cancel enable #t)
       (send cancel focus))
 
     (define (report-error tag exn)
