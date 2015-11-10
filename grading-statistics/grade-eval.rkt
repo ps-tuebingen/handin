@@ -130,11 +130,15 @@
                      (grading-scheme-total (grade-grading-scheme g))))))
 
 (define (list-erroneous wd)
-  (let ((erroneous (all-erroneous-grading-schemes wd)))
+  (let ((erroneous (all-erroneous-grading-schemes wd))
+        (morethan100points (filter (lambda (gs) (> (grading-scheme-total (grade-grading-scheme gs)) 100)) (all-finished-grading-schemes* wd) )))
     (begin
       (display (format "Total number of erroneous grading schemes: ~a\n" (length erroneous)))
       (for ([p erroneous])
         (display (format "~a " (get-user-name-from-path p))))
+      (display (format "Number of grading schemes with more than 100 points: ~a\n" (length morethan100points)))
+      (for ([p morethan100points])
+        (display (format "~a " (grade-student-name p))))      
       (newline))))
 
 (define (stats wd)
