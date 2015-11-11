@@ -136,6 +136,7 @@
       (display (format "Total number of erroneous grading schemes: ~a\n" (length erroneous)))
       (for ([p erroneous])
         (display (format "~a " (get-user-name-from-path p))))
+      (newline)
       (display (format "Number of grading schemes with more than 100 points: ~a\n" (length morethan100points)))
       (for ([p morethan100points])
         (display (format "~a " (grade-student-name p))))      
