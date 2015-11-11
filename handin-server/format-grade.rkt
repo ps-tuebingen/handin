@@ -32,8 +32,7 @@
              (read input-port))))))
 
 (define (grading-finished-entry? entry)
-  (and (symbol? (first entry))
-       (symbol=? (first entry) 'grading-finished)
+  (and (eq? (first entry) 'grading-finished)
        (boolean? (second entry))))
 
 (define (single-well-formed-grading-finished-entry? entries)
