@@ -290,7 +290,7 @@
            (disable-interface)
            (send status set-label tag)
            (when (is-shown?)
-             (message-box "Server Error" msg this)
+             (message-box "Server Error" msg this '(ok stop))
              (if retry?
                (begin (init-comm) (semaphore-post go-sema) (enable-interface))
                (done-interface)))))))
