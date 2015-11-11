@@ -86,8 +86,7 @@
 
 (module+ test
   (require rackunit)
-  (check-equal? #f
-                (finished-grading-scheme?
+  (check-false (finished-grading-scheme?
                  '([grading-finished #false]
                    ["TASK-1-A got the right result" TASK-1-A-CORRECT-RES]
                    ["TASK-1-B got the right result" TASK-1-B-CORRECT-RES]
@@ -95,13 +94,11 @@
                    ["TASK-1-D got the right result" TASK-1-D-CORRECT-RES]
                    ["TASK-1-E got the right result" TASK-1-E-CORRECT-RES]
                    ["TASK-2-A got the right result" TASK-1-E-CORRECT-RES])))
-  (check-equal? #f
-                (finished-grading-scheme?
+  (check-false  (finished-grading-scheme?
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
                    ["TASK-1-B got the right result" TASK-1-B-CORRECT-RES])))
-  (check-equal? #t
-                (finished-grading-scheme?
+  (check-true   (finished-grading-scheme?
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
                    ["TASK-1-B got the right result" 1])))
