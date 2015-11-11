@@ -5,13 +5,15 @@
          racket/bool)
 (provide (all-defined-out))
 
-;; A grading table is the result of reading a `grade.rktd`-like file.
-;; A complete grading table is a list of entries, represented as two-element lists. For each entry.
-;; 1. Either the first element is symbol 'grading-finished and the second is #true.
-;; 2. Or the first element is a string and the second is a number.
-;; The 'grading-finished entry must be present.
+;; A GradingTable is the result of reading a `grade.rktd`-like file.
+;; A ValidGradingTable is a list of entries, represented as two-element lists. For each entry:
+;;   1. Either the first element is symbol 'grading-finished and the second is a boolean.
+;;   2. Or the first element is a string and the second is a number.
+;; Moreover, the 'grading-finished entry must be present.
+;; (We currently don't require that entry to be the first; requiring that would simplify the code a lot).
+;; A FinishedGradingTable is ValidGradingTable where the grading-finished entry is true.
 ;;
-;; Tutors should ensure that grading tables are only complete (according to the above definition)
+;; Tutors should ensure that grading tables are only finished (according to the above definition of FinishedGradingTable)
 ;; when they're sure of the grading enough to show it to students.
 ;;
 
@@ -29,18 +31,9 @@
 
              (read input-port))))))
 
-; GradingScheme -> Bool
-(define (erroneous-grading-scheme? entries)
-  (or
-   (not (list? entries))
-   (not (list? (first entries)))
-   (and (second (first entries)) ; grading-finished = #t
-        (not (finished-grading-scheme? entries)))))
-
-;; check whether something is a filled grading scheme marked as finished
-;; Input: a grading table
-;; Output: a boolean, #t iff the input grading table is valid.
-(define (finished-grading-scheme? entries)
+; Any -> Boolean
+; Tests whether entries is a ValidGradingTable.
+(define (valid-grading-scheme? entries)
   (and (list? entries)
        (for/and ([entry (in-list entries)])
          (and (list? entry)
@@ -49,11 +42,25 @@
                        (number? (second entry)))
                   (and (symbol? (first entry))
                        (symbol=? (first entry) 'grading-finished)
-                       (second entry)))))
+                       (boolean? (second entry))))
+              (for/or ([entry (in-list entries)])
+                (and (symbol? (first entry))
+                     (symbol=? (first entry) 'grading-finished)
+                     (boolean? (second entry))))))))
+
+; GradingTable -> Bool
+(define (erroneous-grading-scheme? entries)
+  (not (valid-grading-scheme? entries)))
+
+; ValidGradingTable -> Boolean
+;; check whether something is a filled grading scheme marked as finished
+;; Output: a boolean, #t iff the input grading table is a FinishedGradingTable.
+(define (finished-grading-scheme? entries)
+  (and (valid-grading-scheme? entries)
        (for/or ([entry (in-list entries)])
-         (and (list? entry)
-              (symbol? (first entry))
-              (symbol=? (first entry) 'grading-finished)))))
+         (and (symbol? (first entry))
+              (symbol=? (first entry) 'grading-finished)
+              (second entry)))))
 
 ;; convert filled grading scheme to definition list xexpr
 ;; Input: a valid grading table
