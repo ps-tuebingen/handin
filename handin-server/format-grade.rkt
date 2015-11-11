@@ -9,7 +9,7 @@
 ;; A ValidGradingTable is a list of entries, represented as two-element lists. For each entry:
 ;;   1. Either the first element is symbol 'grading-finished and the second is a boolean.
 ;;   2. Or the first element is a string and the second is a number.
-;; Moreover, the 'grading-finished entry must be present.
+;; Moreover, exactly one 'grading-finished entry must be present.
 ;; (We currently don't require that entry to be the first; requiring that would simplify the code a lot).
 ;; A FinishedGradingTable is ValidGradingTable where the grading-finished entry is true.
 ;;
@@ -31,6 +31,14 @@
 
              (read input-port))))))
 
+(define (grading-finished-entry? entry)
+  (and (symbol? (first entry))
+       (symbol=? (first entry) 'grading-finished)
+       (boolean? (second entry))))
+
+(define (single-well-formed-grading-finished-entry? entries)
+  (= 1 (length (filter grading-finished-entry? entries))))
+
 ; Any -> Boolean
 ; Tests whether entries is a ValidGradingTable.
 (define (valid-grading-scheme? entries)
@@ -40,13 +48,8 @@
               (equal? (length entry) 2)
               (or (and (string? (first entry))
                        (number? (second entry)))
-                  (and (symbol? (first entry))
-                       (symbol=? (first entry) 'grading-finished)
-                       (boolean? (second entry))))
-              (for/or ([entry (in-list entries)])
-                (and (symbol? (first entry))
-                     (symbol=? (first entry) 'grading-finished)
-                     (boolean? (second entry))))))))
+                  (grading-finished-entry? entry))
+              (single-well-formed-grading-finished-entry? entries)))))
 
 ; GradingTable -> Bool
 (define (erroneous-grading-scheme? entries)
@@ -113,4 +116,12 @@
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
                    ; The second `42` is outside of the string!
-                   ["TASK-2-E (2pt) : Genauer gesagt, hätte 42 ein String sein müssen. Also als "42" geschrieben werden." 1]))))
+                   ["TASK-2-E (2pt) : Genauer gesagt, hätte 42 ein String sein müssen. Also als "42" geschrieben werden." 1])))
+  (check-false  (valid-grading-scheme?
+                 '([grading-finished #t]
+                   ["TASK-1-A got the right result" 0]
+                   ["TASK-1-B got the right result" 1]
+                   [grading-finished #t])))
+  (check-false  (valid-grading-scheme?
+                 '(["TASK-1-A got the right result" 0]
+                   ["TASK-1-B got the right result" 1]))))
