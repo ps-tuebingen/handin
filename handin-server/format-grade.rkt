@@ -64,10 +64,9 @@
               (symbol=? (first entry) 'grading-finished)
               (second entry)))))
 
+; FinishedGradingTable -> XExpr
 ;; convert filled grading scheme to definition list xexpr
-;; Input: a valid grading table
-;; Output: an xexpr
-(define (format-grade-details entries)
+(define (format-grading-table entries)
   (if (list? entries)
     `((table ([class "grading-scheme"])
        ,@(for/list
@@ -76,9 +75,8 @@
                     `(tr (td ,(number->string (second entry))) (td ,(first entry))))))
     `()))
 
+; FinishedGradingTable -> Grade
 ;; compute total grade based on filled grading scheme
-;; Input: a valid grading table
-;; Output: a grade
 (define (grading-scheme-total entries)
   (for/sum ([entry (in-list entries)]
             #:when (string? (first entry)))

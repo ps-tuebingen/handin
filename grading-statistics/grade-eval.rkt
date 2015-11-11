@@ -40,7 +40,7 @@
         [(= bucket 9) "80..89"]
         [(= bucket 10) ">90"]))
 
-; (List-of GradingScheme) -> (List-Of (Cons Bucket Number))
+; (List-of GradingTable) -> (List-Of (Cons Bucket Number))
 (define (grade-histogram gs)
   (let
       ((scores (map grading-scheme-total gs)))
@@ -62,27 +62,27 @@
               (apply append (map (lambda (p) (find-all-grade-files p (- max-depth 1))) (directory-list dir-or-file #:build? #t)))
               (list)))))
 
-; Represents a GradingScheme and a StudentName
-(define-struct grade (grading-scheme student-name))
+; A GradingRecord pairs a GradingTable and a StudentName
+(define-struct grading-record (table name))
 
-; Path -> (List-of GradingScheme)
+; Path -> (List-of GradingTable)
 (define (all-grading-schemes wd)
   (map read-grading-scheme (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
-; Path -> (List-of Grade)
+; Path -> (List-of GradingRecord)
 (define (all-grading-schemes* wd)
   (map (λ (p)
-         (grade (read-grading-scheme p) (get-user-name-from-path p)))
+         (grading-record (read-grading-scheme p) (get-user-name-from-path p)))
        (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
-; Path -> (List-of GradingScheme)
+; Path -> (List-of GradingTable)
 (define (all-finished-grading-schemes wd)
   (filter finished-grading-scheme? (all-grading-schemes wd)))
 
 ; Path -> (List-of GradingRecord)
 (define (all-finished-grading-schemes* wd)
   (filter (λ (gr)
-            (finished-grading-scheme? (grade-grading-scheme gr)))
+            (finished-grading-scheme? (grading-record-table gr)))
           (all-grading-schemes* wd)))
 
 ; Path -> (List-of Path)
@@ -118,12 +118,12 @@
   (display (format "Total number of finished grading schemes: ~a\n" (length finished)))
   (for ([g finished])
     (display (format "~a: ~a\n"
-                     (grade-student-name g)
-                     (grading-scheme-total (grade-grading-scheme g))))))
+                     (grading-record-name g)
+                     (grading-scheme-total (grading-record-table g))))))
 
 (define (list-erroneous wd)
   (let ((erroneous (all-erroneous-grading-schemes wd))
-        (morethan100points (filter (lambda (gs) (> (grading-scheme-total (grade-grading-scheme gs)) 100)) (all-finished-grading-schemes* wd) )))
+        (morethan100points (filter (lambda (gs) (> (grading-scheme-total (grading-record-table gs)) 100)) (all-finished-grading-schemes* wd))))
     (begin
       (display (format "Total number of erroneous grading schemes: ~a\n" (length erroneous)))
       (for ([p erroneous])
@@ -131,7 +131,7 @@
       (newline)
       (display (format "Number of grading schemes with more than 100 points: ~a\n" (length morethan100points)))
       (for ([p morethan100points])
-        (display (format "~a " (grade-student-name p))))
+        (display (format "~a " (grading-record-name p))))
       (newline))))
 
 (define (stats wd)

@@ -187,24 +187,25 @@
 
 ;; Load sum of grades and detailed grades from grade.rktd file for handin hi of user
 ;; (falling back to grade file for the sum and #f for the details)
+; Returns: String (Or FinishedGradingTable #f)
 (define (handin-grade/details user hi)
   (let* ([dir (find-handin-entry hi user)]
-         [grade (and dir
+         [grading-table (and dir
                      (read-grading-scheme (build-path dir "grade.rktd")))])
-    (if (finished-grading-scheme? grade)
-      (values (number->string (grading-scheme-total grade)) grade)
+    (if (finished-grading-scheme? grading-table)
+      (values (number->string (grading-scheme-total grading-table)) grading-table)
       (values (handin-grade user hi) #f))))
 
 ;; Display the status of one user and one handin.
 (define (one-status-page user for-handin)
-  (define-values (grade details)
+  (define-values (grade grading-table)
     (handin-grade/details user for-handin))
   (let* ([next (send/suspend
                 (lambda (k)
                   (make-page (format "Nutzer: ~a, Abgabe: ~a" user for-handin)
                     `(p ,@(handin-link k user for-handin #f))
                     `(p "Punkte: " ,grade)
-                    `(p ,@(format-grade-details details))
+                    `(p ,@(format-grading-table grading-table))
                     `(p ,@(solution-link k for-handin))
                     `(p (a ([href ,(make-k k "allofthem")])
                            ,(format "Alle Abgaben für ~a" user))))))])
@@ -218,7 +219,7 @@
     `(tr ([class ,(if active? "active" "inactive")])
        (th ([scope "row"]) ,hi)
        (td ,(handin-link k user hi upload-suffixes)
-           ,@(format-grade-details details))
+           ,@(format-grading-table details))
        (td ,grade))))
 
 (define (format-tutor-group-field tutor-group)
