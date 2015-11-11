@@ -36,6 +36,7 @@
   (and (list? entries)
        (for/and ([entry (in-list entries)])
          (and (list? entry)
+              (equal? (length entry) 2)
               (or (and (string? (first entry))
                        (number? (second entry)))
                   (and (symbol? (first entry))
