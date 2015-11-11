@@ -107,7 +107,7 @@
 (define (list-unfinished wd)
   (let ((unfinished (all-unfinished-grading-tables wd)))
     (begin
-      (display (format "Total number of unfinished grading schemes: ~a\n" (length unfinished)))
+      (display (format "Total number of unfinished grading tables: ~a\n" (length unfinished)))
       (for ([p unfinished])
         (display (format "~a " (get-user-name-from-path p))))
       (newline))))
@@ -115,7 +115,7 @@
 
 (define (list-grades wd)
   (define finished (all-finished-grading-tables* wd))
-  (display (format "Total number of finished grading schemes: ~a\n" (length finished)))
+  (display (format "Total number of finished grading tables: ~a\n" (length finished)))
   (for ([g finished])
     (display (format "~a: ~a\n"
                      (grading-record-name g)
@@ -125,11 +125,11 @@
   (let ((erroneous (all-erroneous-grading-tables wd))
         (morethan100points (filter (lambda (gs) (> (grading-table-total (grading-record-table gs)) 100)) (all-finished-grading-tables* wd))))
     (begin
-      (display (format "Total number of erroneous grading schemes: ~a\n" (length erroneous)))
+      (display (format "Total number of erroneous grading tables: ~a\n" (length erroneous)))
       (for ([p erroneous])
         (display (format "~a " (get-user-name-from-path p))))
       (newline)
-      (display (format "Number of grading schemes with more than 100 points: ~a\n" (length morethan100points)))
+      (display (format "Number of grading tables with more than 100 points: ~a\n" (length morethan100points)))
       (for ([p morethan100points])
         (display (format "~a " (grading-record-name p))))
       (newline))))

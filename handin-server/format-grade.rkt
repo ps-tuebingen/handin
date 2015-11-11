@@ -55,7 +55,7 @@
   (not (valid-grading-table? entries)))
 
 ; ValidGradingTable -> Boolean
-;; check whether something is a filled grading scheme marked as finished
+;; check whether something is a filled grading table marked as finished
 ;; Output: a boolean, #t iff the input grading table is a FinishedGradingTable.
 (define (finished-grading-table? entries)
   (and (valid-grading-table? entries)
@@ -65,7 +65,7 @@
               (second entry)))))
 
 ; FinishedGradingTable -> XExpr
-;; convert filled grading scheme to definition list xexpr
+;; convert filled grading table to definition list xexpr
 (define (format-grading-table entries)
   (if (list? entries)
     `((table ([class "grading-table"])
@@ -76,7 +76,7 @@
     `()))
 
 ; FinishedGradingTable -> Grade
-;; compute total grade based on filled grading scheme
+;; compute total grade based on filled grading table
 (define (grading-table-total entries)
   (for/sum ([entry (in-list entries)]
             #:when (string? (first entry)))
