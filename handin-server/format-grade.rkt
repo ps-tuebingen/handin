@@ -111,6 +111,10 @@
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
                    ["TASK-1-B got the right result" 1])))
+  (check-true   (valid-grading-scheme?
+                 '([grading-finished #f]
+                   ["TASK-1-A got the right result" 0]
+                   ["TASK-1-B got the right result" 1])))
   (check-false  (finished-grading-scheme?
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
