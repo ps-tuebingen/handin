@@ -29,6 +29,14 @@
 
              (read input-port))))))
 
+; GradingScheme -> Bool
+(define (erroneous-grading-scheme? entries)
+  (or
+   (not (list? entries))
+   (not (list? (first entries)))
+   (and (second (first entries)) ; grading-finished = #t
+        (not (finished-grading-scheme? entries)))))
+
 ;; check whether something is a filled grading scheme marked as finished
 ;; Input: a grading table
 ;; Output: a boolean, #t iff the input grading table is valid.

@@ -14,14 +14,6 @@
 
 (define args (current-command-line-arguments))
 
-; GradingScheme -> Bool
-(define (erroneous-grading-scheme? entries)
-  (or
-   (not (list? entries))
-   (not (list? (first entries)))
-   (and (second (first entries)) ; grading-finished = #t
-        (not (finished-grading-scheme? entries)))))
-
 ; Point -> Bucket
 (define (points->bucket points)
   (cond [(< points 10) 1]
