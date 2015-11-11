@@ -40,7 +40,7 @@
         [(= bucket 9) "80..89"]
         [(= bucket 10) ">90"]))
 
-; (List-of GradingTable) -> (List-Of (Cons Bucket Number))
+; (List-of FinishedGradingTable) -> (List-Of (Cons Bucket Number))
 (define (grade-histogram gs)
   (let
       ((scores (map grading-table-total gs)))
@@ -65,6 +65,8 @@
 ; A GradingRecord pairs a GradingTable and a StudentName
 (define-struct grading-record (table name))
 
+; A FinishedGradingRecord is a GradingRecord whose GradingTable is a FinishedGradingTable.
+
 ; Path -> (List-of GradingTable)
 (define (all-grading-tables wd)
   (map read-grading-table (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
@@ -75,11 +77,11 @@
          (grading-record (read-grading-table p) (get-user-name-from-path p)))
        (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
-; Path -> (List-of GradingTable)
+; Path -> (List-of FinishedGradingTable)
 (define (all-finished-grading-tables wd)
   (filter finished-grading-table? (all-grading-tables wd)))
 
-; Path -> (List-of GradingRecord)
+; Path -> (List-of FinishedGradingRecord)
 (define (all-finished-grading-tables* wd)
   (filter (λ (gr)
             (finished-grading-table? (grading-record-table gr)))
