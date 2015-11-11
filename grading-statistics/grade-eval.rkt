@@ -139,7 +139,7 @@
       (newline)
       (display (format "Number of grading schemes with more than 100 points: ~a\n" (length morethan100points)))
       (for ([p morethan100points])
-        (display (format "~a " (grade-student-name p))))      
+        (display (format "~a " (grade-student-name p))))
       (newline))))
 
 (define (stats wd)
