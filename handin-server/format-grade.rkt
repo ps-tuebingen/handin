@@ -20,7 +20,7 @@
 ;; Deserialized a grade.rktd file.
 ; Filename -> GradingTable or #f
 ;; Input: a filename
-(define (read-grading-scheme filename)
+(define (read-grading-table filename)
   (and (file-exists? filename)
        (with-handlers ([exn:fail? (const #f)])
          (call-with-input-file* filename
@@ -40,7 +40,7 @@
 
 ; Any -> Boolean
 ; Tests whether entries is a ValidGradingTable.
-(define (valid-grading-scheme? entries)
+(define (valid-grading-table? entries)
   (and (list? entries)
        (for/and ([entry (in-list entries)])
          (and (list? entry)
@@ -51,14 +51,14 @@
               (single-well-formed-grading-finished-entry? entries)))))
 
 ; GradingTable -> Bool
-(define (erroneous-grading-scheme? entries)
-  (not (valid-grading-scheme? entries)))
+(define (erroneous-grading-table? entries)
+  (not (valid-grading-table? entries)))
 
 ; ValidGradingTable -> Boolean
 ;; check whether something is a filled grading scheme marked as finished
 ;; Output: a boolean, #t iff the input grading table is a FinishedGradingTable.
-(define (finished-grading-scheme? entries)
-  (and (valid-grading-scheme? entries)
+(define (finished-grading-table? entries)
+  (and (valid-grading-table? entries)
        (for/or ([entry (in-list entries)])
          (and (symbol? (first entry))
               (symbol=? (first entry) 'grading-finished)
@@ -68,7 +68,7 @@
 ;; convert filled grading scheme to definition list xexpr
 (define (format-grading-table entries)
   (if (list? entries)
-    `((table ([class "grading-scheme"])
+    `((table ([class "grading-table"])
        ,@(for/list
                    ([entry (in-list entries)]
                     #:when (string? (first entry)))
@@ -77,7 +77,7 @@
 
 ; FinishedGradingTable -> Grade
 ;; compute total grade based on filled grading scheme
-(define (grading-scheme-total entries)
+(define (grading-table-total entries)
   (for/sum ([entry (in-list entries)]
             #:when (string? (first entry)))
     (second entry)))
@@ -85,15 +85,15 @@
 ;; compute total grade from filename of the .rktd file
 ;; Input: filename
 ;; Output: a total grade, or #f in case of any errors.
-(define (filename->grading-scheme-total filename)
-  (define entries (read-grading-scheme filename))
+(define (filename->grading-table-total filename)
+  (define entries (read-grading-table filename))
   (and entries
-       (finished-grading-scheme? entries)
-       (grading-scheme-total entries)))
+       (finished-grading-table? entries)
+       (grading-table-total entries)))
 
 (module+ test
   (require rackunit)
-  (check-false (finished-grading-scheme?
+  (check-false (finished-grading-table?
                  '([grading-finished #false]
                    ["TASK-1-A got the right result" TASK-1-A-CORRECT-RES]
                    ["TASK-1-B got the right result" TASK-1-B-CORRECT-RES]
@@ -101,28 +101,28 @@
                    ["TASK-1-D got the right result" TASK-1-D-CORRECT-RES]
                    ["TASK-1-E got the right result" TASK-1-E-CORRECT-RES]
                    ["TASK-2-A got the right result" TASK-1-E-CORRECT-RES])))
-  (check-false  (finished-grading-scheme?
+  (check-false  (finished-grading-table?
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
                    ["TASK-1-B got the right result" TASK-1-B-CORRECT-RES])))
-  (check-true   (finished-grading-scheme?
+  (check-true   (finished-grading-table?
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
                    ["TASK-1-B got the right result" 1])))
-  (check-true   (valid-grading-scheme?
+  (check-true   (valid-grading-table?
                  '([grading-finished #f]
                    ["TASK-1-A got the right result" 0]
                    ["TASK-1-B got the right result" 1])))
-  (check-false  (finished-grading-scheme?
+  (check-false  (finished-grading-table?
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
                    ; The second `42` is outside of the string!
                    ["TASK-2-E (2pt) : Genauer gesagt, hätte 42 ein String sein müssen. Also als "42" geschrieben werden." 1])))
-  (check-false  (valid-grading-scheme?
+  (check-false  (valid-grading-table?
                  '([grading-finished #t]
                    ["TASK-1-A got the right result" 0]
                    ["TASK-1-B got the right result" 1]
                    [grading-finished #t])))
-  (check-false  (valid-grading-scheme?
+  (check-false  (valid-grading-table?
                  '(["TASK-1-A got the right result" 0]
                    ["TASK-1-B got the right result" 1]))))

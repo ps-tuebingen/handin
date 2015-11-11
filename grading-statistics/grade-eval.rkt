@@ -43,7 +43,7 @@
 ; (List-of GradingTable) -> (List-Of (Cons Bucket Number))
 (define (grade-histogram gs)
   (let
-      ((scores (map grading-scheme-total gs)))
+      ((scores (map grading-table-total gs)))
     (map (lambda (xs) (cons (bucket-name (points->bucket (first xs))) (length xs)))
          (sort (group-by points->bucket scores) (lambda (x y) (< (first x) (first y)))))))
 
@@ -66,33 +66,33 @@
 (define-struct grading-record (table name))
 
 ; Path -> (List-of GradingTable)
-(define (all-grading-schemes wd)
-  (map read-grading-scheme (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
+(define (all-grading-tables wd)
+  (map read-grading-table (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
 ; Path -> (List-of GradingRecord)
-(define (all-grading-schemes* wd)
+(define (all-grading-tables* wd)
   (map (λ (p)
-         (grading-record (read-grading-scheme p) (get-user-name-from-path p)))
+         (grading-record (read-grading-table p) (get-user-name-from-path p)))
        (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
 ; Path -> (List-of GradingTable)
-(define (all-finished-grading-schemes wd)
-  (filter finished-grading-scheme? (all-grading-schemes wd)))
+(define (all-finished-grading-tables wd)
+  (filter finished-grading-table? (all-grading-tables wd)))
 
 ; Path -> (List-of GradingRecord)
-(define (all-finished-grading-schemes* wd)
+(define (all-finished-grading-tables* wd)
   (filter (λ (gr)
-            (finished-grading-scheme? (grading-record-table gr)))
-          (all-grading-schemes* wd)))
+            (finished-grading-table? (grading-record-table gr)))
+          (all-grading-tables* wd)))
 
 ; Path -> (List-of Path)
-(define (all-erroneous-grading-schemes wd)
-  (filter (lambda (p) (erroneous-grading-scheme? (read-grading-scheme p)))
+(define (all-erroneous-grading-tables wd)
+  (filter (lambda (p) (erroneous-grading-table? (read-grading-table p)))
           (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
 ; Path -> (List-of Path)
-(define (all-unfinished-grading-schemes wd)
-  (filter (lambda (p) (not (finished-grading-scheme? (read-grading-scheme p))))
+(define (all-unfinished-grading-tables wd)
+  (filter (lambda (p) (not (finished-grading-table? (read-grading-table p))))
           (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
 
@@ -105,7 +105,7 @@
         p)))
 
 (define (list-unfinished wd)
-  (let ((unfinished (all-unfinished-grading-schemes wd)))
+  (let ((unfinished (all-unfinished-grading-tables wd)))
     (begin
       (display (format "Total number of unfinished grading schemes: ~a\n" (length unfinished)))
       (for ([p unfinished])
@@ -114,16 +114,16 @@
 
 
 (define (list-grades wd)
-  (define finished (all-finished-grading-schemes* wd))
+  (define finished (all-finished-grading-tables* wd))
   (display (format "Total number of finished grading schemes: ~a\n" (length finished)))
   (for ([g finished])
     (display (format "~a: ~a\n"
                      (grading-record-name g)
-                     (grading-scheme-total (grading-record-table g))))))
+                     (grading-table-total (grading-record-table g))))))
 
 (define (list-erroneous wd)
-  (let ((erroneous (all-erroneous-grading-schemes wd))
-        (morethan100points (filter (lambda (gs) (> (grading-scheme-total (grading-record-table gs)) 100)) (all-finished-grading-schemes* wd))))
+  (let ((erroneous (all-erroneous-grading-tables wd))
+        (morethan100points (filter (lambda (gs) (> (grading-table-total (grading-record-table gs)) 100)) (all-finished-grading-tables* wd))))
     (begin
       (display (format "Total number of erroneous grading schemes: ~a\n" (length erroneous)))
       (for ([p erroneous])
@@ -135,14 +135,14 @@
       (newline))))
 
 (define (stats wd)
-  (let ((scores (map grading-scheme-total (all-finished-grading-schemes wd))))
+  (let ((scores (map grading-table-total (all-finished-grading-tables wd))))
     (begin
       (display (format "Number of finished grade files: ~a\n" (length scores)))
       (display (format "Mean score: ~a\n" (mean scores)))
       (display (format "Median score: ~a\n" (median < scores))))))
 
 (define (histo wd)
-  (for [( q (grade-histogram (all-finished-grading-schemes wd)))]
+  (for [( q (grade-histogram (all-finished-grading-tables wd)))]
     (display (format "Point range ~a : ~a \n" (car q) (cdr q)))))
 
 (define (usage)
