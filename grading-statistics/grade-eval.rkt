@@ -136,6 +136,29 @@
         (display (format "~a " (grading-record-name p))))
       (newline))))
 
+(define (verify wd schema)
+  (let* ((gt (all-finished-grading-tables* wd))
+         (noOfGrades (lambda (g) (- (length (grading-record-table g)) 1)))
+         (wrongNoOfGrades (filter (lambda (g) (not (= (length schema) (noOfGrades g)))) gt))
+         (rightNoOfGrades (filter (lambda (g) (= (length schema) (noOfGrades g))) gt))
+         (tooManyPointsOnTask (filter (lambda (ge)
+                                     (foldl (lambda (x y) (or x y))
+                                             #f
+                                             (map (lambda (gentry max) (> (second gentry) max)) (cdr (grading-record-table ge)) schema)))
+                                   rightNoOfGrades)))
+    (begin
+      (display (format "Total number of grading tables with incorrect number of grades: ~a\n" (length wrongNoOfGrades)))
+      (for ([p wrongNoOfGrades])
+        (display (format "~a " (grading-record-name p))))
+      (newline)
+      (display (format "Total number of grading tables with too many points on some tasks: ~a\n" (length tooManyPointsOnTask)))
+      (for ([p tooManyPointsOnTask])
+        (display (format "~a " (grading-record-name p))))
+      (newline))))
+      
+    
+
+
 (define (stats wd)
   (let ((scores (map grading-table-total (all-finished-grading-tables wd))))
     (begin
@@ -147,8 +170,17 @@
   (for [( q (grade-histogram (all-finished-grading-tables wd)))]
     (display (format "Point range ~a : ~a \n" (car q) (cdr q)))))
 
+(define (parse-schema s)
+  (let ((schema (read (open-input-string s))))
+    (if (and
+         (list? schema)
+         (for/and [(m schema)] (number? m)))
+        schema
+        (error (format "Cannot parse grade schema, must be list of numbers: ~a" schema)))))
+
+  
 (define (usage)
-  (display "usage: racket format-grade.rkt (stats|list|unfinished|erroneous|histogram) path\n"))
+  (display "usage: racket format-grade.rkt (stats|list|unfinished|erroneous|verify|histogram) <path> <schema>\n"))
 
 (if (< (vector-length args) 2)
     (begin
@@ -166,10 +198,12 @@
         (usage)
         (exit 1))))
 
+
 (match (vector-ref args 0)
   ["stats" (stats working-directory)]
   ["list" (list-grades working-directory)]
   ["unfinished" (list-unfinished working-directory)]
   ["erroneous" (list-erroneous working-directory)]
   ["histogram" (histo working-directory)]
+  ["verify" (verify working-directory (parse-schema (vector-ref args 2)))]
   [else (usage)])
