@@ -155,8 +155,8 @@
       (for ([p tooManyPointsOnTask])
         (display (format "~a " (grading-record-name p))))
       (newline))))
-      
-    
+
+
 
 
 (define (stats wd)
@@ -178,7 +178,7 @@
         schema
         (error (format "Cannot parse grade schema, must be list of numbers: ~a" schema)))))
 
-  
+
 (define (usage)
   (display "usage: racket format-grade.rkt (stats|list|unfinished|erroneous|verify|histogram) <path> <schema>\n"))
 
