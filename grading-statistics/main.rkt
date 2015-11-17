@@ -48,6 +48,11 @@
          (sort (group-by points->bucket scores) (lambda (x y) (< (first x) (first y)))))))
 
 
+; Path -> (union Path 'up 'same)
+; extract the immediate directory or file name from a path
+(define (basename dir-or-file)
+  (let-values ([(_1 filename _2) (split-path dir-or-file)])
+    filename))
 
 ; Path -> (List-Of Path)
 (define (find-all-grade-files dir-or-file max-depth)
@@ -55,8 +60,7 @@
       (list)
       (if (equal?
            (string->path GRADE-FILENAME)
-           (let-values
-               ([(_1 filename _2) (split-path dir-or-file)]) filename))
+           (basename dir-or-file))
           (list dir-or-file)
           (if (directory-exists? dir-or-file)
               (apply append (map (lambda (p) (find-all-grade-files p (- max-depth 1))) (directory-list dir-or-file #:build? #t)))
