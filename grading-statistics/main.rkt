@@ -10,7 +10,7 @@
 
 (require "../handin-server/format-grade.rkt")
 (define GRADE-FILENAME "grade.rktd")
-(define DIRECTORY-SEARCH-DEPTH-LIMIT 3)
+(define DIRECTORY-SEARCH-DEPTH-LIMIT 5)
 
 (define args (current-command-line-arguments))
 
