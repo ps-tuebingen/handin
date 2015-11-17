@@ -180,7 +180,7 @@
 
 
 (define (usage)
-  (display "usage: racket format-grade.rkt (stats|list|unfinished|erroneous|verify|histogram) <path> <schema>\n"))
+  (display "usage: racket -l grading-statistics (stats|list|unfinished|erroneous|verify|histogram) <path> <schema>\n"))
 
 (if (< (vector-length args) 2)
     (begin
