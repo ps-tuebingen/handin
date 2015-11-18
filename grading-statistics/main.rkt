@@ -164,11 +164,12 @@
 
 
 (define (stats wd)
-  (let ((scores (map grading-table-total (all-finished-grading-tables wd))))
-    (begin
-      (display (format "Number of finished grade files: ~a\n" (length scores)))
-      (display (format "Mean score: ~a\n" (mean scores)))
-      (display (format "Median score: ~a\n" (median < scores))))))
+  (define scores (map grading-table-total (all-finished-grading-tables wd)))
+  (define n-scores (length scores))
+  (display (format "Number of finished grade files: ~a\n" n-scores))
+  (when (> n-scores 0)
+    (display (format "Mean score: ~a\n" (mean scores)))
+    (display (format "Median score: ~a\n" (median < scores)))))
 
 (define (histo wd)
   (for [( q (grade-histogram (all-finished-grading-tables wd)))]
