@@ -1,8 +1,33 @@
 #lang racket/base
 
 (require syntax/moddep "logger.rkt")
+(module mon racket/base
+  (define sema (make-semaphore 1))
+  (define-syntax-rule
+    (provide/monitor (id x ...))
+    (begin
+      (define -id
+        (let ([id (λ (x ...)
+                    (call-with-semaphore
+                     sema
+                     (λ () (id x ...))))])
+          id))
+      (provide (rename-out [-id id]))))
+  (provide provide/monitor))
+(require (submod "." mon))
 
-(provide reload-module)
+(module+ test
+  (module m racket/base
+    (require (submod ".." ".." mon))
+    (define (f x) (* 2 (g x)))
+    (define (g x) (+ x 1))
+    (provide/monitor (f x))
+    (provide/monitor (g x)))
+  (require (submod "." m) rackunit)
+  (check-equal? (g 2) 3)
+  (check-equal? (f 11) 24))
+
+(provide/monitor (reload-module modspec path))
 (define (reload-module modspec path)
   ;; the path argument is not needed (could use resolve-module-path here), but
   ;; its always known when this function is called
@@ -20,7 +45,7 @@
 
 ;; pulls out a value from a module, reloading the module if its source file was
 ;; modified
-(provide auto-reload-value)
+(provide/monitor (auto-reload-value modspec valname))
 (define module-times (make-hash))
 (define (auto-reload-value modspec valname)
   (define path0 (resolve-module-path modspec #f))
@@ -43,7 +68,7 @@
 ;; pulls out a procedure from a module, and returns a wrapped procedure that
 ;; automatically reloads the module if the file was changed whenever the
 ;; procedure is used
-(provide auto-reload-procedure)
+(provide/monitor (auto-reload-procedure x y))
 (define (auto-reload-procedure modspec procname)
   (let ([path (resolve-module-path modspec #f)] [date #f] [proc #f] [poll #f])
     (define (reload)
