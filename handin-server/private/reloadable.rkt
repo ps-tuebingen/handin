@@ -13,7 +13,10 @@
                      (λ () (id x ...))))])
           id))
       (provide (rename-out [-id id]))))
-  (provide provide/monitor))
+  (define-syntax-rule
+    (protect e)
+    (call-with-semaphore sema (λ () e)))
+  (provide provide/monitor protect))
 (require (submod "." mon))
 
 (module+ test
@@ -80,4 +83,4 @@
             (reload-module modspec path)
             (set! proc (dynamic-require modspec procname))))))
     (reload)
-    (lambda xs (reload) (apply proc xs))))
+    (lambda xs (protect (reload)) (apply proc xs))))
