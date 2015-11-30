@@ -36,7 +36,8 @@
          timeout-control
 
          get-user-assignment-directory
-         get-assignment-name)
+         get-assignment-name
+         list-abbreviation-enabled)
 
 (define (unpack-submission str)
   (let* ([base (make-object editor-stream-in-bytes-base% str)]
