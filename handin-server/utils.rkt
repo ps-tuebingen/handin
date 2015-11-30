@@ -175,8 +175,7 @@
   (parameterize ([error-value->string-handler (lambda (v s)
                                                 ((current-value-printer) v))]
                  [list-abbreviation-enabled
-                  (not (or (equal? lang '(special beginner))
-                           (equal? lang '(special beginner-abbr))))])
+                  (not (or (equal? lang '(special beginner))))])
     (reraise-exn-as-submission-problem
      (lambda ()
        (let ([e (make-evaluator* lang requires program-port)])
