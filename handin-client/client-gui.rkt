@@ -3,7 +3,7 @@
 (require racket/class racket/unit racket/file racket/gui/base net/sendurl
          mrlib/switchable-button mrlib/bitmap-label drracket/tool framework
          drracket/private/auto-language
-         "info.rkt" "client.rkt" "this-collection.rkt")
+         "info.rkt" "client.rkt" "this-collection.rkt" "utils.rkt")
 
 (provide tool@)
 
@@ -745,15 +745,8 @@
           (send new-editor insert-port (open-input-string text)))
         new-editor))
 
-    (define (editors->string definitions interactions)
-      (let* ([base (make-object editor-stream-out-bytes-base%)]
-             [stream (make-object editor-stream-out% base)]
-             [definitions-with-fake-header (with-fake-header definitions)])
-        (write-editor-version stream base)
-        (write-editor-global-header stream)
-        (for ([ed (in-list (list definitions-with-fake-header interactions))]) (send ed write-to-file stream))
-        (write-editor-global-footer stream)
-        (send base get-bytes)))
+    (define (editors->string* definitions interactions)
+      (editors->string (with-fake-header definitions) interactions))
 
     ; Adapted from
     ; https://github.com/racket/drracket/blob/a2f8efc910ffd5e0992279ff59bfe7145598d5ba/drracket/drracket/private/unit.rkt#L619-L643
@@ -835,7 +828,7 @@
                [parent client-panel]
                [callback
                 (lambda (button)
-                  (let ([content (editors->string
+                  (let ([content (editors->string*
                                   (get-definitions-text)
                                   (get-interactions-text))])
                     (new handin-frame%
