@@ -175,7 +175,8 @@
   (parameterize ([error-value->string-handler (lambda (v s)
                                                 ((current-value-printer) v))]
                  [list-abbreviation-enabled
-                  (not (or (equal? lang '(special beginner))))])
+                  (not (or (equal? lang '(special beginner))
+                           (equal? lang '(module (lib "htdp-beginner.ss" "lang")))))])
     (reraise-exn-as-submission-problem
      (lambda ()
        (let ([e (make-evaluator* lang requires program-port)])
