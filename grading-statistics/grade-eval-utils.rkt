@@ -8,7 +8,7 @@
 (require "../handin-server/format-grade.rkt")
 
 (define GRADE-FILENAME "grade.rktd")
-(define DIRECTORY-SEARCH-DEPTH-LIMIT 5)
+(define DIRECTORY-SEARCH-DEPTH-LIMIT 2)
 
 
 ; Point -> Bucket
@@ -52,19 +52,16 @@
     filename))
 
 ; Path -> (List-Of Path)
-(define (find-all-grade-files dir-or-file max-depth)
-  (if (<= max-depth 0)
-      (list)
-      (if (equal?
-           (string->path GRADE-FILENAME)
-           (basename dir-or-file))
-          (list dir-or-file)
-          (if (directory-exists? dir-or-file)
-              (apply append (map (lambda (p) (find-all-grade-files p (- max-depth 1))) (directory-list dir-or-file #:build? #t)))
-              (list)))))
+(define (find-all-grade-files dir max-depth)
+  (if (= max-depth 0)
+      (list (build-path dir GRADE-FILENAME))
+      (apply append
+             (map (lambda (p) (find-all-grade-files p (- max-depth 1)))
+                  (filter directory-exists? (directory-list dir #:build? #t))))))
 
 ; A GradingRecord pairs a GradingTable and a StudentName
-(define-struct grading-record (table name))
+(define-struct grading-record (table name tutor))
+
 
 ; A FinishedGradingRecord is a GradingRecord whose GradingTable is a FinishedGradingTable.
 
@@ -75,7 +72,7 @@
 ; Path -> (List-of GradingRecord)
 (define (all-grading-tables* wd)
   (map (λ (p)
-         (grading-record (read-grading-table p) (get-user-name-from-path p)))
+         (grading-record (read-grading-table p) (get-user-name-from-path p) (get-tutor-name-from-path p)))
        (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
 ; Path -> (List-of FinishedGradingTable)
@@ -93,6 +90,18 @@
   (filter (lambda (p) (erroneous-grading-table? (read-grading-table p)))
           (find-all-grade-files wd DIRECTORY-SEARCH-DEPTH-LIMIT)))
 
+; Path -> (List-of UnfinishedGradingRecord)
+(define (all-erroneous-grading-tables* wd)
+  (filter (λ (gr)
+            (erroneous-grading-table? (grading-record-table gr)))
+          (all-grading-tables* wd)))
+
+; Path -> (List-of UnfinishedGradingRecord)
+(define (all-unfinished-grading-tables* wd)
+  (filter (λ (gr)
+            (not (finished-grading-table? (grading-record-table gr))))
+          (all-grading-tables* wd)))
+
 ; Path -> (List-of Path)
 (define (all-unfinished-grading-tables wd)
   (filter (lambda (p) (not (finished-grading-table? (read-grading-table p))))
@@ -107,14 +116,39 @@
         (list-ref path-components (- numOfPC 2))
         p)))
 
-(define (list-unfinished wd)
-  (let ((unfinished (all-unfinished-grading-tables wd)))
-    (begin
-      (display (format "Total number of unfinished grading tables: ~a\n" (length unfinished)))
-      (for ([p unfinished])
-        (display (format "~a " (get-user-name-from-path p))))
-      (newline))))
+; Path -> TutorName
+(define (get-tutor-name-from-path p)
+  (let* ((path-components (explode-path p))
+         (numOfPC (length path-components)))
+    (if (> numOfPC 2)
+        (list-ref path-components (- numOfPC 3))
+        p)))
 
+; (list-of GradingRecord) (Grading-Record -> String) String -> ()
+; displays list of grading records, grouped by tutor
+(define (display-grading-tables gts showgr title)
+  (if (> (length gts) 0)
+      (begin
+        (display title)
+        (newline)
+        (display "---")
+        (newline)
+        (display (format "Total number: ~a\n" (length gts)))
+        (for ([tgts (group-by grading-record-tutor gts)]
+              #:when (not (empty? tgts)))
+          (begin
+            (display (format "Tutor: ~a\n" (grading-record-tutor (first tgts))))
+            (for ([gt tgts])
+              (display (showgr gt)))
+            (newline) (newline))))
+      '()))
+
+
+(define (list-unfinished wd)
+  (let ((unfinished (all-unfinished-grading-tables* wd)))
+    (display-grading-tables unfinished
+                            (lambda (u) (format "~a " (grading-record-name u)))
+                            "Unfinished grading tables:")))
 
 (define (list-grades wd)
   (define finished (all-finished-grading-tables* wd))
@@ -124,18 +158,25 @@
                      (grading-record-name g)
                      (grading-table-total (grading-record-table g))))))
 
+
 (define (list-erroneous wd)
-  (let ((erroneous (all-erroneous-grading-tables wd))
+  (let* ((all (all-grading-tables* wd))
+        (non-existing-grading-file (filter (lambda (gr) (eq? (grading-record-table gr) #false)) all))
+        (existing-grading-file (filter (lambda (gr) (not (eq? (grading-record-table gr) #false))) all))
+        (erroneous (filter (lambda (gr) (erroneous-grading-table? (grading-record-table gr))) existing-grading-file))
         (morethan100points (filter (lambda (gs) (> (grading-table-total (grading-record-table gs)) 100)) (all-finished-grading-tables* wd))))
     (begin
-      (display (format "Total number of erroneous grading tables: ~a\n" (length erroneous)))
-      (for ([p erroneous])
-        (display (format "~a " (get-user-name-from-path p))))
-      (newline)
-      (display (format "Number of grading tables with more than 100 points: ~a\n" (length morethan100points)))
-      (for ([p morethan100points])
-        (display (format "~a " (grading-record-name p))))
-      (newline))))
+      (display-grading-tables non-existing-grading-file
+                              (lambda (p) (format "~a " (grading-record-name p)))
+                              "Datei grade.rktd existiert nicht oder kann nicht geladen werden")
+      (display-grading-tables erroneous
+                              (lambda (p) (format "~a " (grading-record-name p)))
+                              "Grading ist noch nicht fertig oder Fehler im Format")
+;      (display-grading-tables morethan100points
+;                              (lambda (p) (format "~a " (grading-record-name p)))
+;                              "Grading tables with more than 100 points: ")
+  )))
+
 
 (define (verify wd schema)
   (let* ((gt (all-finished-grading-tables* wd))
@@ -148,14 +189,21 @@
                                              (map (lambda (gentry max) (> (second gentry) max)) (cdr (grading-record-table ge)) schema)))
                                    rightNoOfGrades)))
     (begin
-      (display (format "Total number of grading tables with incorrect number of grades: ~a\n" (length wrongNoOfGrades)))
-      (for ([p wrongNoOfGrades])
-        (display (format "~a " (grading-record-name p))))
-      (newline)
-      (display (format "Total number of grading tables with too many points on some tasks: ~a\n" (length tooManyPointsOnTask)))
-      (for ([p tooManyPointsOnTask])
-        (display (format "~a " (grading-record-name p))))
-      (newline))))
+      (list-erroneous wd)
+      (display-grading-tables wrongNoOfGrades
+                              (lambda (p) (format "~a " (grading-record-name p)))
+                              "Anzahl der benoteten Aufgaben stimmt nicht")
+      (display-grading-tables tooManyPointsOnTask
+                              (lambda (p) (format "~a " (grading-record-name p)))
+                              "Enthält Bewertungen mit zu vielen Punkten"))))
+;      (display (format "Total number of grading tables with incorrect number of grades: ~a\n" (length wrongNoOfGrades)))
+;      (for ([p wrongNoOfGrades])
+;        (display (format "~a " (grading-record-name p))))
+;      (newline)
+;      (display (format "Total number of grading tables with too many points on some tasks: ~a\n" (length tooManyPointsOnTask)))
+;      (for ([p tooManyPointsOnTask])
+;        (display (format "~a " (grading-record-name p))))
+;      (newline))))
 
 
 
