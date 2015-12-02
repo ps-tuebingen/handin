@@ -28,7 +28,15 @@
              ; Workaround Racket bug https://github.com/racket/racket/issues/1114
              (when (equal? (peek-char input-port) #\uFEFF)
                (read-char input-port))
-
+             ; Skip Racket header (lines that start with ; or #), if present
+             (letrec ((skipheader (lambda ()
+                                    (when (or (equal? (peek-char input-port) #\;)
+                                              (equal? (peek-char input-port) #\#))
+                                      (begin
+                                        (read-line input-port)
+                                        (skipheader))))))
+               (skipheader))
+             
              (read input-port))))))
 
 (define (grading-finished-entry? entry)
