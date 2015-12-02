@@ -164,6 +164,8 @@
   (apply string-append (car users)
          (map (lambda (u) (string-append "+" u)) (cdr users))))
 
+(define HANDIN-NAME "handin")
+
 (define (accept-specific-submission data r r-safe w)
   ;; Note: users are always sorted
   (define users       (a-ref data 'usernames))
@@ -219,7 +221,7 @@
         (when (directory-exists? ATTEMPT-DIR)
           (delete-directory/files ATTEMPT-DIR))
         (make-directory ATTEMPT-DIR)
-        (save-submission s (build-path ATTEMPT-DIR "handin"))
+        (save-submission s (build-path ATTEMPT-DIR HANDIN-NAME))
         (timeout-control 'reset)
         (log-line "checking ~a for ~a" assignment users)
         (let* ([checker* (path->complete-path (build-path 'up "checker.rkt"))]
@@ -263,9 +265,9 @@
                     (begin
                       (log-line "saving ~a for ~a" assignment users)
                       (parameterize ([current-directory ATTEMPT-DIR])
-                        (cond [part (unless (equal? part "handin")
-                                      (rename-file-or-directory "handin" part))]
-                              [(file-exists? "handin") (delete-file "handin")]))
+                        (cond [part (unless (equal? part HANDIN-NAME)
+                                      (rename-file-or-directory HANDIN-NAME part))]
+                              [(file-exists? HANDIN-NAME) (delete-file HANDIN-NAME)]))
                       ;; Shift successful-attempt directories so that there's
                       ;;  no SUCCESS-0:
                       (make-success-dir-available 0)
