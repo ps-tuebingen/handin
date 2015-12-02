@@ -164,6 +164,12 @@
   (apply string-append (car users)
          (map (lambda (u) (string-append "+" u)) (cdr users))))
 
+; Two-step saving:
+; 1. save submission as "ATTEMPT" / HANDIN-NAME-TMP
+; 2. once that's done, rename it (atomically) to "ATTEMPT" / HANDIN-NAME.
+; This way, if "ATTEMPT" / HANDIN-NAME exists, it's complete.
+
+(define HANDIN-NAME-TMP "handin-tmp")
 (define HANDIN-NAME "handin")
 
 (define (accept-specific-submission data r r-safe w)
@@ -221,7 +227,8 @@
         (when (directory-exists? ATTEMPT-DIR)
           (delete-directory/files ATTEMPT-DIR))
         (make-directory ATTEMPT-DIR)
-        (save-submission s (build-path ATTEMPT-DIR HANDIN-NAME))
+        (save-submission s (build-path ATTEMPT-DIR HANDIN-NAME-TMP))
+        (rename-file-or-directory (build-path ATTEMPT-DIR HANDIN-NAME-TMP) (build-path ATTEMPT-DIR HANDIN-NAME))
         (timeout-control 'reset)
         (log-line "checking ~a for ~a" assignment users)
         (let* ([checker* (path->complete-path (build-path 'up "checker.rkt"))]
