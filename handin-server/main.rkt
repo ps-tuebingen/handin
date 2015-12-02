@@ -156,9 +156,13 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; bytes? path-string? -> void?
+; Atomically save s to a file named part
 (define (save-submission s part)
-  (with-output-to-file part
-    (lambda () (display s))))
+  (call-with-atomic-output-file
+   part
+   (lambda (port tmp-path)
+     (display s port))))
 
 (define (users->dirname users)
   (apply string-append (car users)
@@ -227,8 +231,7 @@
         (when (directory-exists? ATTEMPT-DIR)
           (delete-directory/files ATTEMPT-DIR))
         (make-directory ATTEMPT-DIR)
-        (save-submission s (build-path ATTEMPT-DIR HANDIN-NAME-TMP))
-        (rename-file-or-directory (build-path ATTEMPT-DIR HANDIN-NAME-TMP) (build-path ATTEMPT-DIR HANDIN-NAME))
+        (save-submission s (build-path ATTEMPT-DIR HANDIN-NAME))
         (timeout-control 'reset)
         (log-line "checking ~a for ~a" assignment users)
         (let* ([checker* (path->complete-path (build-path 'up "checker.rkt"))]
