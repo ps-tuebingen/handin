@@ -169,6 +169,7 @@
          (map (lambda (u) (string-append "+" u)) (cdr users))))
 
 (define HANDIN-NAME "handin")
+(define LAST-SUBMISSION-NAME "last-submission-attempt.rkt")
 
 (define (accept-specific-submission data r r-safe w)
   ;; Note: users are always sorted
@@ -225,6 +226,7 @@
         (when (directory-exists? ATTEMPT-DIR)
           (delete-directory/files ATTEMPT-DIR))
         (make-directory ATTEMPT-DIR)
+        (save-submission s LAST-SUBMISSION-NAME)
         (save-submission s (build-path ATTEMPT-DIR HANDIN-NAME))
         (timeout-control 'reset)
         (log-line "checking ~a for ~a" assignment users)
