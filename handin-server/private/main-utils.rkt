@@ -55,4 +55,4 @@
   (with-output-to-file
    tmp-filename
    (lambda () (display s)))
-  (rename-file-or-directory tmp-filename part))
+  (rename-file-or-directory tmp-filename part #t))
