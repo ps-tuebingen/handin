@@ -162,8 +162,7 @@
          (map (lambda (u) (string-append "+" u)) (cdr users))))
 
 (define HANDIN-NAME "handin")
-; XXX Cheap workaround for https://github.com/racket/racket/issues/1156.
-(define LAST-SUBMISSION-NAME "./latest-submission.rkt")
+(define LAST-SUBMISSION-NAME "latest-submission.rkt")
 
 (define (accept-specific-submission data r r-safe w)
   ;; Note: users are always sorted
