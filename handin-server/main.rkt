@@ -169,7 +169,7 @@
          (map (lambda (u) (string-append "+" u)) (cdr users))))
 
 (define HANDIN-NAME "handin")
-(define LAST-SUBMISSION-NAME "last-submission-attempt.rkt")
+(define LAST-SUBMISSION-NAME "latest-submission.rkt")
 
 (define (accept-specific-submission data r r-safe w)
   ;; Note: users are always sorted
