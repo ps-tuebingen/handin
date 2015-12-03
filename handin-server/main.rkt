@@ -13,6 +13,7 @@
          "private/hooker.rkt"
          "private/userdb.rkt"
          "private/main-params.rkt"
+         "private/main-utils.rkt"
          (prefix-in web: "web-status-server.rkt")
          ;; this sets some global parameter values, and this needs
          ;; to be done in the main thread, rather than later in a
@@ -155,14 +156,6 @@
              (loop)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; bytes? path-string? -> void?
-; Atomically save s to a file named part
-(define (save-submission s part)
-  (call-with-atomic-output-file
-   part
-   (lambda (port tmp-path)
-     (display s port))))
 
 (define (users->dirname users)
   (apply string-append (car users)
