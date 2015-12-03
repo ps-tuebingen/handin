@@ -49,6 +49,9 @@
 ;   here (as long as satisfies its bytes? contract).
 (define (save-submission s part)
   (define tmp-filename (tmp-filename-for part))
+
+  (with-handlers ([exn:fail? void])
+    (delete-directory/files tmp-filename #:must-exist? #f))
   (with-output-to-file
    tmp-filename
    (lambda () (display s)))
