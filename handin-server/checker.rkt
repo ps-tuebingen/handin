@@ -3,7 +3,8 @@
 (require (only-in 2htdp/image image?))
 
 (require (for-syntax racket/base) "utils.rkt"
-         racket/file racket/class racket/promise racket/gui/base)
+         racket/file racket/class racket/promise racket/gui/base
+         "private/userdb.rkt")
 
 (provide (except-out (all-from-out racket/base) #%module-begin)
          (all-from-out "utils.rkt"))
@@ -43,9 +44,7 @@
 (provide user-data)
 (define (user-data user)
   ;; the student is always assumed to exist
-  (cdr (get-preference (if (string? user) (string->symbol user) user)
-                       (lambda () #f) 'timestamp
-                       (build-path server-dir "users.rktd"))))
+  (cdr (get-user-data (if (symbol? user) (symbol->string user) user))))
 
 (provide user-substs)
 (define (user-substs user str)
