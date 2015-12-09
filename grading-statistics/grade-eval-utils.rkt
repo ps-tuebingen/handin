@@ -2,10 +2,11 @@
 
 (provide (all-defined-out))
 (require racket/list)
-(require unstable/list)
+;(require unstable/list)
 (require math/statistics)
 
 (require "../handin-server/format-grade.rkt")
+(require "users.rkt")
 
 (define GRADE-FILENAME "grade.rktd")
 (define DIRECTORY-SEARCH-DEPTH-LIMIT 2)
@@ -44,6 +45,11 @@
     (map (lambda (xs) (cons (bucket-name (points->bucket (first xs))) (length xs)))
          (sort (group-by points->bucket scores) (lambda (x y) (< (first x) (first y)))))))
 
+(define (normalized-grade-histogram gs)
+  (let* ((h (grade-histogram gs))
+         (count (foldl (lambda (y x) (+ x (cdr y))) 0 h)))
+    (map (lambda (x) (cons (car x) (* 100 (/ (cdr x) count)))) h)))
+    
 
 ; Path -> (union Path 'up 'same)
 ; extract the immediate directory or file name from a path
@@ -59,7 +65,7 @@
              (map (lambda (p) (find-all-grade-files p (- max-depth 1)))
                   (filter directory-exists? (directory-list dir #:build? #t))))))
 
-; A GradingRecord pairs a GradingTable and a StudentName
+; A GradingRecord pairs a GradingTable and a StudentName and a Tutor
 (define-struct grading-record (table name tutor))
 
 
@@ -113,8 +119,8 @@
   (let* ((path-components (explode-path p))
          (numOfPC (length path-components)))
     (if (> numOfPC 1)
-        (list-ref path-components (- numOfPC 2))
-        p)))
+        (path-element->string (list-ref path-components (- numOfPC 2)))
+        "unknown")))
 
 ; Path -> TutorName
 (define (get-tutor-name-from-path p)
@@ -127,7 +133,7 @@
 ; (list-of GradingRecord) (Grading-Record -> String) String -> ()
 ; displays list of grading records, grouped by tutor
 (define (display-grading-tables gts showgr title)
-  (if (> (length gts) 0)
+  (when (> (length gts) 0)
       (begin
         (display title)
         (newline)
@@ -140,8 +146,7 @@
             (display (format "Tutor: ~a\n" (grading-record-tutor (first tgts))))
             (for ([gt tgts])
               (display (showgr gt)))
-            (newline) (newline))))
-      '()))
+            (newline) (newline))))))
 
 
 (define (list-unfinished wd)
@@ -157,6 +162,7 @@
     (display (format "~a: ~a\n"
                      (grading-record-name g)
                      (grading-table-total (grading-record-table g))))))
+
 
 
 (define (list-erroneous wd)
@@ -216,9 +222,48 @@
     (display (format "Mean score: ~a\n" (mean scores)))
     (display (format "Median score: ~a\n" (median < scores)))))
 
+(define (stats-by-studiengang wd)
+  (let* ((grading-records (all-finished-grading-tables* wd))
+         (number-of-records (length grading-records))
+         (sorted-grading-records (sort
+                                  grading-records
+                                  (lambda (gt1 gt2)
+                                            (>
+                                              (grading-table-total (grading-record-table gt1))
+                                              (grading-table-total (grading-record-table gt2))))))
+         ; index-and-studiengang has the form  '((Kognitionswissenschaft . 17) (Bioinformatik . 16) ...)
+         (index-and-studiengang (cdr (foldr (lambda (x xs) (cons (+ (car xs) 1)
+                                                            (cons
+                                                             (cons (hash-ref user->studiengang (grading-record-name x))
+                                                                   (car xs))
+                                                             (cdr xs))))
+                                            (cons 0 empty)
+                                            sorted-grading-records)))
+         (grouped-by-studiengang (group-by (lambda (x) (car x)) index-and-studiengang))
+         (median-per-studiengang (map (lambda (gbs) (cons (car (first gbs)) (* 100 (/ (median < (map cdr gbs )) number-of-records)))) grouped-by-studiengang)))
+    
+    
+         
+    (for [(q median-per-studiengang)]
+         (display (format "Studiengang ~a : Median Prozentpercentil: ~a %\n" (car q) (real->decimal-string (cdr q)))))))
+
+
 (define (histo wd)
-  (for [( q (grade-histogram (all-finished-grading-tables wd)))]
-    (display (format "Point range ~a : ~a \n" (car q) (cdr q)))))
+  (for [( q (normalized-grade-histogram (all-finished-grading-tables wd)))]
+    (display (format "Point range ~a : ~a %\n" (car q) (real->decimal-string (cdr q))))))
+
+(define (histo-by-studiengang wd)
+  (let* ((grading-records (all-finished-grading-tables* wd))
+         (grading-records-by-studiengang
+           (group-by (lambda (gr) (hash-ref user->studiengang (grading-record-name gr) "unknown")) grading-records)))
+    (for [(sg grading-records-by-studiengang)]
+         (begin
+           ;(display (format "~a" (map grading-record-name grading-records)))
+           (display (format "Studiengang: ~a , Anzahl: ~a\n "
+                            (hash-ref user->studiengang (grading-record-name (first sg)) "unknown")
+                            (length sg)))
+           (for [(q (normalized-grade-histogram (map grading-record-table sg)))]
+                (display (format "Point range ~a : ~a %\n" (car q) (real->decimal-string (cdr q)))))))))
 
 (define (parse-schema s)
   (let ((schema (read (open-input-string s))))

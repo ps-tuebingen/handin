@@ -6,7 +6,7 @@
 (define args (current-command-line-arguments))
 
 (define (usage)
-  (display "usage: racket -l grading-statistics (stats|list|unfinished|erroneous|verify|histogram) <path> <schema>\n"))
+  (display "usage: racket -l grading-statistics (stats|list|unfinished|erroneous|verify|histogram|histo-by-studiengang|stats-by-studiengang) <path> <schema>\n"))
 
 (if (< (vector-length args) 2)
     (begin
@@ -29,5 +29,10 @@
   ["unfinished" (list-unfinished working-directory)]
   ["erroneous" (list-erroneous working-directory)]
   ["histogram" (histo working-directory)]
+  ["histo-by-studiengang" (histo-by-studiengang working-directory)]
+  ["stats-by-studiengang" (stats-by-studiengang working-directory)]
+
+  
+
   ["verify" (verify working-directory (parse-schema (vector-ref args 2)))]
   [else (usage)])
