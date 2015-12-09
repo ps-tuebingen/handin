@@ -13,6 +13,7 @@
          "private/hooker.rkt"
          "private/userdb.rkt"
          "private/main-params.rkt"
+         "private/main-utils.rkt"
          (prefix-in web: "web-status-server.rkt")
          ;; this sets some global parameter values, and this needs
          ;; to be done in the main thread, rather than later in a
@@ -156,21 +157,12 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (save-submission s part)
-  (with-output-to-file part
-    (lambda () (display s))))
-
 (define (users->dirname users)
   (apply string-append (car users)
          (map (lambda (u) (string-append "+" u)) (cdr users))))
 
-; Two-step saving:
-; 1. save submission as "ATTEMPT" / HANDIN-NAME-TMP
-; 2. once that's done, rename it (atomically) to "ATTEMPT" / HANDIN-NAME.
-; This way, if "ATTEMPT" / HANDIN-NAME exists, it's complete.
-
-(define HANDIN-NAME-TMP "handin-tmp")
 (define HANDIN-NAME "handin")
+(define LAST-SUBMISSION-NAME "latest-submission.rkt")
 
 (define (accept-specific-submission data r r-safe w)
   ;; Note: users are always sorted
@@ -227,8 +219,8 @@
         (when (directory-exists? ATTEMPT-DIR)
           (delete-directory/files ATTEMPT-DIR))
         (make-directory ATTEMPT-DIR)
-        (save-submission s (build-path ATTEMPT-DIR HANDIN-NAME-TMP))
-        (rename-file-or-directory (build-path ATTEMPT-DIR HANDIN-NAME-TMP) (build-path ATTEMPT-DIR HANDIN-NAME))
+        (save-submission s LAST-SUBMISSION-NAME)
+        (save-submission s (build-path ATTEMPT-DIR HANDIN-NAME))
         (timeout-control 'reset)
         (log-line "checking ~a for ~a" assignment users)
         (let* ([checker* (path->complete-path (build-path 'up "checker.rkt"))]
