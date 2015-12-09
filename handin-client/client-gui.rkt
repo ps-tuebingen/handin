@@ -177,9 +177,15 @@
          (send status set-label "Committing...")
          (set! committing? #t)
          (semaphore-post commit-lock))
-       ;; message/message-final/message-box handlers
+       ;; message handler
        (lambda (msg) (send status set-label msg))
-       (lambda (msg) (set! status-line-message msg))
+       ;; message-final handler
+       ; Allow the final message to be longer than one line and contain the rest of the message.
+       (lambda (msg)
+         (define-values (first-msg-line rest-msg-lines) (first-line-rest msg))
+         (set! status-line-message first-msg-line)
+         (set! detailed-submission-message rest-msg-lines))
+       ;; message-box handler
        (lambda (msg styles)
          ; XXX This is is a total hack abusing the protocol :-(.
          (if (equal? styles '(ok caution))
