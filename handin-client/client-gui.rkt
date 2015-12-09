@@ -157,9 +157,14 @@
            [style (if mode '(deleted) '())]))
 
     (define (submit-file)
-      ; XXX This should be in English for coherence with its context.
-      (define final-message "Handin successful.")
-      (define intermediate-message #f)
+      ; XXX This should possibly be in English for coherence with its context. But German is fine.
+
+      ; status-line-message : label-string?
+      ; Mutable variable; contains a string shorter than 200 characters.
+      (define status-line-message "Handin successful.")
+      ; detailed-submission-message : (or/c string? #f)
+      ; Mutable variable, containing more details on the submission, in any.
+      (define detailed-submission-message #f)
       (submit-assignment
        connection
        (send username get-value)
@@ -174,12 +179,12 @@
          (semaphore-post commit-lock))
        ;; message/message-final/message-box handlers
        (lambda (msg) (send status set-label msg))
-       (lambda (msg) (set! final-message msg))
+       (lambda (msg) (set! status-line-message msg))
        (lambda (msg styles)
          ; XXX This is is a total hack abusing the protocol :-(.
          (if (equal? styles '(ok caution))
              (begin
-               (set! intermediate-message msg)
+               (set! detailed-submission-message msg)
                'ok)
              (message-box "Handin" msg this styles))))
       (queue-callback
@@ -188,21 +193,20 @@
          ; Using `'(ok caution)` below is not necessarily right, we should get info from the client.
          (message-box "Handin"
                       (string-append
-                       (if (equal? final-message "Handin successful.")
+                       (if (equal? status-line-message "Handin successful.")
                                          ; XXX This should be in German for coherence with its context.
                                          ; XXX Translate default message to German.
                                          "Erfolgreiche Abgabe!"
-                                         final-message)
-                       (if intermediate-message
-                           (string-append "\n\n" intermediate-message)
+                                         status-line-message)
+                       (if detailed-submission-message
+                           (string-append "\n\n" detailed-submission-message)
                            ""))
                       this
                       '(ok caution))
-         ; This is hacky; final-message has multiple lines,
-         ; but only the first will be shown.
-         ; You better start your success message with "Handin saved"
-         ; or equivalent on the first line.
-         (send status set-label final-message)
+         ; XXX Not true currently, to be fixed.
+         ; ; You better start your success message with "Handin saved"
+         ; ; or equivalent on the first line.
+         (send status set-label status-line-message)
          (set! committing? #f)
          (done-interface))))
     (define (retrieve-file)
