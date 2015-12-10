@@ -2,7 +2,7 @@
 
 (provide (all-defined-out))
 (require racket/list)
-;(require unstable/list)
+(require unstable/list)
 (require math/statistics)
 
 (require "../handin-server/format-grade.rkt")
