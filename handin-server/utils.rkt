@@ -2,6 +2,7 @@
 
 (require racket/class racket/gui/base racket/pretty
          (prefix-in pc: mzlib/pconvert)
+         ; Only import identifiers we want to reexport below
          (only-in "private/main-params.rkt" timeout-control get-user-assignment-directory get-assignment-name)
          "private/run-status.rkt"
          "private/config.rkt"
@@ -9,6 +10,7 @@
          "sandbox.rkt")
 
 (provide (all-from-out "sandbox.rkt")
+         (all-from-out "private/main-params.rkt")
 
          get-conf
          log-line
@@ -33,10 +35,6 @@
          user-construct
          test-history-enabled
 
-         timeout-control
-
-         get-user-assignment-directory
-         get-assignment-name
          list-abbreviation-enabled)
 
 (define (unpack-submission str)

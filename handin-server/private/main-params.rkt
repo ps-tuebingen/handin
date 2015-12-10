@@ -6,7 +6,6 @@
 
 (require "logger.rkt")
 (define current-timeout-control (make-parameter #f))
-(provide timeout-control)
 (define (timeout-control msg)
   (log-line "timeout-control: ~s" msg)
   ((current-timeout-control) msg))
