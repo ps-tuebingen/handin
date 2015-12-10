@@ -3,7 +3,7 @@
 (require racket/class racket/gui/base racket/pretty
          (prefix-in pc: mzlib/pconvert)
          ; Only import identifiers we want to reexport below
-         (only-in "private/main-params.rkt" timeout-control get-user-assignment-directory get-assignment-name)
+         (only-in "private/main-params.rkt" timeout-control get-user-assignment-directory get-assignment-name get-client-plugin-version)
          "private/run-status.rkt"
          "private/config.rkt"
          "private/logger.rkt"

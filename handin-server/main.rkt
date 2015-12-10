@@ -639,6 +639,7 @@
            (write+flush w 'handin)
            ;; Check version:
            (let ([ver (read r-safe)])
+             (client-plugin-version ver)
              (if (or (eq? 'ver1 ver) (eq? 'ver1.1 ver))
                  (write+flush w 'ver1)
                  (error 'handin "unknown handin version: ~e" ver)))
