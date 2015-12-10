@@ -55,11 +55,11 @@
     (let ([s (read-bytes 6 r)])
       (unless (equal? #"handin" s)
         (error 'handin-connect "bad handshake from server: ~e" s)))
-    ;; Tell server protocol = 'ver1:
-    (write+flush w 'ver1)
+    ;; Tell server protocol = 'ver1.1, because we accept long final messages:
+    (write+flush w 'ver1.1)
     ;; One more sanity check: server recognizes protocol:
     (let ([s (read r)])
-      (unless (eq? s 'ver1)
+      (unless (or (eq? s 'ver1) (eq? s 'ver1.1))
         (error 'handin-connect "bad protocol from server: ~e" s)))
     ;; Return connection:
     (make-handin r w)))

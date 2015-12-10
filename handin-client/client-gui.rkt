@@ -157,7 +157,14 @@
            [style (if mode '(deleted) '())]))
 
     (define (submit-file)
-      (define final-message "Handin successful.")
+      ; XXX This should possibly be in English for coherence with its context. But German is fine.
+
+      ; status-line-message : label-string?
+      ; Mutable variable; contains a string shorter than 200 characters.
+      (define status-line-message "Handin successful.")
+      ; detailed-submission-message : (or/c string? #f)
+      ; Mutable variable, containing more details on the submission, in any.
+      (define detailed-submission-message #f)
       (submit-assignment
        connection
        (send username get-value)
@@ -170,14 +177,42 @@
          (send status set-label "Committing...")
          (set! committing? #t)
          (semaphore-post commit-lock))
-       ;; message/message-final/message-box handlers
+       ;; message handler
        (lambda (msg) (send status set-label msg))
-       (lambda (msg) (set! final-message msg))
-       (lambda (msg styles) (message-box "Handin" msg this styles)))
+       ;; message-final handler
+       ; Allow the final message to be longer than one line and contain the rest of the message.
+       (lambda (msg)
+         (define-values (first-msg-line rest-msg-lines) (first-line-rest msg))
+         (set! status-line-message first-msg-line)
+         (set! detailed-submission-message rest-msg-lines))
+       ;; message-box handler
+       (lambda (msg styles)
+         ; XXX This is is a total hack abusing the protocol :-(.
+         (if (equal? styles '(ok caution))
+             (begin
+               (set! detailed-submission-message msg)
+               'ok)
+             (message-box "Handin" msg this styles))))
       (queue-callback
        (lambda ()
          (when abort-commit-dialog (send abort-commit-dialog show #f))
-         (send status set-label final-message)
+         ; Using `'(ok caution)` below is not necessarily right, we should get info from the client.
+         (message-box "Handin"
+                      (string-append
+                       (if (equal? status-line-message "Handin successful.")
+                                         ; XXX This should be in German for coherence with its context.
+                                         ; XXX Translate default message to German.
+                                         "Erfolgreiche Abgabe!"
+                                         status-line-message)
+                       (if detailed-submission-message
+                           (string-append "\n\n" detailed-submission-message)
+                           ""))
+                      this
+                      '(ok caution))
+         ; XXX Not true currently, to be fixed.
+         ; ; You better start your success message with "Handin saved"
+         ; ; or equivalent on the first line.
+         (send status set-label status-line-message)
          (set! committing? #f)
          (done-interface))))
     (define (retrieve-file)
@@ -290,7 +325,7 @@
            (disable-interface)
            (send status set-label tag)
            (when (is-shown?)
-             (message-box "Server Error" msg this)
+             (message-box "Server Error" msg this '(ok stop))
              (if retry?
                (begin (init-comm) (semaphore-post go-sema) (enable-interface))
                (done-interface)))))))
