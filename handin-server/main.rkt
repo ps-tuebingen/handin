@@ -639,7 +639,7 @@
            (write+flush w 'handin)
            ;; Check version:
            (let ([ver (read r-safe)])
-             (if (or (eq? 'ver1 ver) (eq? 'ver1-1 ver))
+             (if (or (eq? 'ver1 ver) (eq? 'ver1.1 ver))
                  (write+flush w 'ver1)
                  (error 'handin "unknown handin version: ~e" ver)))
            (handle-connection r r-safe w)
