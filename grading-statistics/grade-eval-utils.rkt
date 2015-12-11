@@ -266,9 +266,8 @@
                 (display (format "Point range ~a : ~a %\n" (car q) (real->decimal-string (cdr q)))))))))
 
 (define (parse-schema s)
-  (let ((schema (read (open-input-string s))))
-    (if (and
-         (list? schema)
-         (for/and [(m schema)] (number? m)))
-        schema
-        (error (format "Cannot parse grade schema, must be list of numbers: ~a" schema)))))
+  (if (and
+       (list? s)
+       (for/and [(m s)] (number? m)))
+      s
+      (error (format "Cannot parse grade schema, must be list of numbers: ~a" s))))
