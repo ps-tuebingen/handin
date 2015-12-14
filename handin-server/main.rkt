@@ -642,7 +642,7 @@
              (client-plugin-version ver)
              (cond
                [(eq? 'ver1.1 ver)
-                (write+flush w 'ver1)]
+                (write+flush w 'ver1.1)]
                [(eq? 'ver1 ver)
                 (error 'handin
                        (string-append
