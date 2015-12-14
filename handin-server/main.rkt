@@ -640,9 +640,18 @@
            ;; Check version:
            (let ([ver (read r-safe)])
              (client-plugin-version ver)
-             (if (or (eq? 'ver1 ver) (eq? 'ver1.1 ver))
-                 (write+flush w 'ver1)
-                 (error 'handin "unknown handin version: ~e" ver)))
+             (cond
+               [(eq? 'ver1.1 ver)
+                (write+flush w 'ver1)]
+               [(eq? 'ver1 ver)
+                (error (string-append
+                        "Achtung: Ihre Version des Abgabeplugins ist veraltet. "
+                        "Aus diesem Grund können wir Ihre Lösung nicht annehmen.\n\n"
+                        "Upgraden Sie bitte das Plugin umgehend und starten Sie DrRacket neu. "
+                        "Eine Anleitung finden Sie auch im Forum:\n\n"
+                        "  https://forum-ps.informatik.uni-tuebingen.de/plugin-aktualisieren"))]
+               [else
+                (error 'handin "unknown handin version: ~e" ver)]))
            (handle-connection r r-safe w)
            (log-line "normal exit")
            (kill-watcher)))))))
