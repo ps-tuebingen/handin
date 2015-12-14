@@ -644,7 +644,8 @@
                [(eq? 'ver1.1 ver)
                 (write+flush w 'ver1)]
                [(eq? 'ver1 ver)
-                (error (string-append
+                (error 'handin
+                       (string-append
                         "Achtung: Ihre Version des Abgabeplugins ist veraltet. "
                         "Aus diesem Grund können wir Ihre Lösung nicht annehmen.\n\n"
                         "Upgraden Sie bitte das Plugin umgehend und starten Sie DrRacket neu. "
