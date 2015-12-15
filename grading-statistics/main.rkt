@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require racket/match
+         "../handin-server/format-grade.rkt"
          "grade-eval-utils.rkt")
 
 ; this file simply contains the max. points schema
@@ -27,25 +28,10 @@
       (display-error (format "Path not found: ~a" (vector-ref args 1)))))
 
 (define schema
-  (let ((schema-file (build-path working-directory SCHEMA-FILENAME)))
+  (let ([schema-file (build-path working-directory SCHEMA-FILENAME)])
     (and (file-exists? schema-file)
-         (with-handlers ([exn:fail?
-                          (lambda (exn) (display-error (format "Problem loading schema file: ~a" schema-file)))])
-           (call-with-input-file* schema-file
-             (λ (input-port)
-               ; Workaround Racket bug https://github.com/racket/racket/issues/1114
-               (when (equal? (peek-char input-port) #\uFEFF)
-                 (read-char input-port))
-               ; Skip Racket header (lines that start with ; or #), if present
-               (letrec ((skipheader (lambda ()
-                                      (when (or (equal? (peek-char input-port) #\;)
-                                                (equal? (peek-char input-port) #\#))
-                                        (begin
-                                          (read-line input-port)
-                                          (skipheader))))))
-                 (skipheader))
-               
-               (read input-port)))))))
+         (or (read-grading-table schema-file)
+             (display-error (format "Problem loading schema file: ~a" schema-file))))))
 
 (match (vector-ref args 0)
   ["stats" (stats working-directory)]
