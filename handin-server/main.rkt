@@ -565,15 +565,16 @@
                                 (list (mem (current-memory-use orig-custodian))
                                       (mem (current-memory-use)))))
                   (loop #f)])))
-  (define (timeout-control msg)
+  (define (timeout-controller msg)
     (if (rational? msg)
         (set! timeout (+ (current-inexact-milliseconds) (* 1000 msg)))
         (case msg
-          [(reset) (timeout-control (get-conf 'session-timeout))]
+          [(reset) (timeout-controller (get-conf 'session-timeout))]
           [(disable #f) (set! timeout #f)]
           [else (error 'timeout-control "bad argument: ~s" msg)])))
-  (current-timeout-control timeout-control)
-  (timeout-control 'reset)
+  ; Install timeout controller
+  (current-timeout-control timeout-controller)
+  (timeout-controller 'reset)
   (unless no-limit-warning?
     (with-handlers ([exn:fail:unsupported?
                      (lambda (x)
