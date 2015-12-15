@@ -14,7 +14,7 @@
   (let ([ps-range (range (length ps))])
     `(define-syntax-rule
        (module-begin ([gf bool]
-                      ,@(map (lambda (d i) `[,d ,(generate-points-placeholder i)]) ds ps-range))
+                      ,@(map (lambda (d i) `[,d ,(generate-points-placeholder i)]) ds ps-range)))
        (#%module-begin
         (define check-format
           (cond
@@ -25,7 +25,7 @@
            ,@(map (lambda (m i) `(<= ,(generate-points-placeholder i) ,m)) ps ps-range)))
         (define check-max-points (if correct-max-points? #t (error "Höchstpunktzahl überschritten")))
         (define check (and check-format check-max-points))
-        (provide check))))))
+        (provide check)))))
 
 ;; A MaxPointsTable is the result of reading a `grade-max.rktd`-like file.
 
