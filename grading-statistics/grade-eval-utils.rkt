@@ -212,15 +212,14 @@
 ;      (newline))))
 
 
-
+(define (scores wd) (map grading-table-total (all-finished-grading-tables wd)))
 
 (define (stats wd)
-  (define scores (map grading-table-total (all-finished-grading-tables wd)))
-  (define n-scores (length scores))
+  (define n-scores (length (scores wd)))
   (display (format "Number of finished grade files: ~a\n" n-scores))
   (when (> n-scores 0)
-    (display (format "Mean score: ~a\n" (mean scores)))
-    (display (format "Median score: ~a\n" (median < scores)))))
+    (display (format "Mean score: ~a\n" (mean (scores wd))))
+    (display (format "Median score: ~a\n" (median < (scores wd))))))
 
 (define (stats-by-studiengang wd)
   (let* ((grading-records (all-finished-grading-tables* wd))
@@ -264,6 +263,15 @@
                             (length sg)))
            (for [(q (normalized-grade-histogram (map grading-record-table sg)))]
                 (display (format "Point range ~a : ~a %\n" (car q) (real->decimal-string (cdr q)))))))))
+
+(define (means-list wd)
+  (for [(f (directory-list wd))]
+    (let ([directory (build-path wd f)])
+      (when (and (directory-exists? directory) (> (length (scores directory)) 0))
+        (begin
+          (display (format "~a : mean score : ~a %\n"
+                           f
+                           (mean (scores directory)))))))))
 
 (define (parse-schema s)
   (if (and

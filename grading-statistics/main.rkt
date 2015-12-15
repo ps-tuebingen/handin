@@ -41,6 +41,7 @@
   ["histogram" (histo working-directory)]
   ["histo-by-studiengang" (histo-by-studiengang working-directory)]
   ["stats-by-studiengang" (stats-by-studiengang working-directory)]
+  ["means-list" (means-list working-directory)]
   
   
   
