@@ -4,6 +4,14 @@
 
 (define GRADE-MAX-FILENAME "grade-max.rktd")
 
+(define LANG-DEF-FILENAME "lang-def.rkt")
+
+(define HEADER "#lang racket\n; Use this language definition to verify filled-in grade files\n; To check such a file, use\n;  #lang s-exp \"lang-def.rkt\"\n; in the header.\n")
+
+(define PROVIDE '(provide (except-out (all-from-out racket)
+                                      #%module-begin)
+                          (rename-out [module-begin #%module-begin])))
+
 ; Integer -> Symbol
 (define (generate-points-placeholder i)
   (string->symbol (string-append "p" (number->string i))))
@@ -37,6 +45,7 @@
 (define (max-points entries)
   (map third (cdr entries)))
 
-; TODO: write into a file, which is prefixed with the provide and header
-(let ([entries (read-grading-table GRADE-MAX-FILENAME)]) ; TODO: read from `<wd>/grade-max.rktd` (need to process wd taken from args)
-  (generate-lang-def-rule (descriptions entries) (max-points entries)))
+(let* ([entries (read-grading-table GRADE-MAX-FILENAME)] ; TODO: read from `<wd>/grade-max.rktd` (need to process wd taken from args)
+       [rule (format "~s" (generate-lang-def-rule (descriptions entries) (max-points entries)))]
+       [output (string-append HEADER (format "~s" PROVIDE) "\n" rule)])
+  (display-to-file output LANG-DEF-FILENAME))
