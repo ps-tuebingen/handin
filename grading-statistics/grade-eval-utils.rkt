@@ -268,10 +268,9 @@
   (for [(f (directory-list wd))]
     (let ([directory (build-path wd f)])
       (when (and (directory-exists? directory) (> (length (scores directory)) 0))
-        (begin
-          (display (format "~a : mean score : ~a %\n"
-                           f
-                           (mean (scores directory)))))))))
+        (display (format "~a : mean score : ~a %\n"
+                         f
+                         (mean (scores directory))))))))
 
 (define (student-scores s wd)
   (for [(f (directory-list wd))]
