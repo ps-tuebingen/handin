@@ -33,6 +33,11 @@
          (or (read-grading-table schema-file)
              (display-error (format "Problem loading schema file: ~a" schema-file))))))
 
+(define student
+  (if (< (vector-length args) 3)
+      #f
+      (vector-ref args 2)))
+
 (match (vector-ref args 0)
   ["stats" (stats working-directory)]
   ["list" (list-grades working-directory)]
@@ -42,6 +47,9 @@
   ["histo-by-studiengang" (histo-by-studiengang working-directory)]
   ["stats-by-studiengang" (stats-by-studiengang working-directory)]
   ["means-list" (means-list working-directory)]
+  ["student-scores" (if student
+                        (student-scores student working-directory)
+                        (display-error "Please specify which student"))]
   
   
   

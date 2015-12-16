@@ -273,6 +273,24 @@
                            f
                            (mean (scores directory)))))))))
 
+(define (student-scores s wd)
+  (for [(f (directory-list wd))]
+    (define is-homework-folder (char-numeric? (first (string->list (path->string f)))))
+    (let* ([exercise-directory (build-path wd f)]
+           [student-directory (build-path exercise-directory s)]
+           [grade-files (find-all-grade-files student-directory 0)])
+      (when (and (directory-exists? exercise-directory) is-homework-folder)
+        (if (directory-exists? student-directory)
+            (when (> (length grade-files) 0)
+              (let ([grading-table (read-grading-table (car grade-files))])
+                (if (and (valid-grading-table? grading-table)
+                         (finished-grading-table? grading-table))
+                    (display (format "~a : score : ~a %\n"
+                                     f
+                                     (grading-table-total (read-grading-table (car grade-files)))))
+                    (display (format "~a : unfinished or invalid grading table\n" f)))))
+            (display (format "~a : no homework handed in\n" f)))))))
+
 (define (parse-schema s)
   (if (and
        (list? s)
