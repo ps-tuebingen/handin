@@ -9,6 +9,7 @@
 (require "users.rkt")
 
 (define GRADE-FILENAME "grade.rktd")
+(define GRADE-MAX-FILENAME "grade-max.rktd")
 (define DIRECTORY-SEARCH-DEPTH-LIMIT 2)
 
 
@@ -289,6 +290,23 @@
                                      (grading-table-total (read-grading-table (car grade-files)))))
                     (display (format "~a : unfinished or invalid grading table\n" f)))))
             (display (format "~a : no homework handed in\n" f)))))))
+
+
+
+(define (means-for-exercise wd)
+  (define max-template (read-grading-table (build-path wd GRADE-MAX-FILENAME)))
+  (define grading-records (all-finished-grading-tables wd))
+  (define (exercise-score i gt) (second (list-ref gt i)))
+  (define (max-score i) (third (list-ref max-template i)))
+  (for ([i (range 1 (length max-template))])
+    (let ([scores (map (lambda (gt) (exercise-score i gt)) grading-records)])
+      (if (empty? scores)
+          (display (format "No grading for exercise #~a\n" i))
+          (display (format "Mean for exercise #~a : ~a %\n"
+                           i
+                           (real->decimal-string (* 100
+                                                    (/ (mean (map (lambda (gt) (exercise-score i gt)) grading-records))
+                                                       (max-score i))))))))))
 
 (define (parse-schema s)
   (if (and

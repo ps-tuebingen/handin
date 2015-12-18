@@ -50,6 +50,7 @@
   ["student-scores" (if student
                         (student-scores student working-directory)
                         (display-error "Please specify which student"))]
+  ["means-for-exercise" (means-for-exercise working-directory)]
   
   
   
