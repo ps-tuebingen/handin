@@ -39,18 +39,23 @@
         [(= bucket 9) "80..89"]
         [(= bucket 10) ">90"]))
 
-; (List-of FinishedGradingTable) -> (List-Of (Cons Bucket Number))
-(define (grade-histogram gs)
-  (let
-      ((scores (map grading-table-total gs)))
-    (map (lambda (xs) (cons (bucket-name (points->bucket (first xs))) (length xs)))
-         (sort (group-by points->bucket scores) (lambda (x y) (< (first x) (first y)))))))
+; (List-of Point) -> (List-of (Cons Bucket Number))
+(define (grade-histogram ps)
+  (map (lambda (xs) (cons (bucket-name (points->bucket (first xs))) (length xs)))
+       (sort (group-by points->bucket ps) (lambda (x y) (< (first x) (first y))))))
 
-(define (normalized-grade-histogram gs)
-  (let* ((h (grade-histogram gs))
+(define (normalized-grade-histogram ps)
+  (let* ((h (grade-histogram ps))
          (count (foldl (lambda (y x) (+ x (cdr y))) 0 h)))
     (map (lambda (x) (cons (car x) (* 100 (/ (cdr x) count)))) h)))
-    
+
+; (List-of FinishedGradingTable) -> (List-Of (Cons Bucket Number))
+(define (grade-histogram-for-gt gs)
+  (grade-histogram (map grading-table-total gs)))
+
+(define (normalized-grade-histogram-for-gt gs)
+  (normalized-grade-histogram (map grading-table-total gs)))
+
 
 ; Path -> (union Path 'up 'same)
 ; extract the immediate directory or file name from a path
@@ -249,7 +254,7 @@
 
 
 (define (histo wd)
-  (for [( q (normalized-grade-histogram (all-finished-grading-tables wd)))]
+  (for [( q (normalized-grade-histogram-for-gt (all-finished-grading-tables wd)))]
     (display (format "Point range ~a : ~a %\n" (car q) (real->decimal-string (cdr q))))))
 
 (define (histo-by-studiengang wd)
@@ -262,7 +267,7 @@
            (display (format "Studiengang: ~a , Anzahl: ~a\n "
                             (hash-ref user->studiengang (grading-record-name (first sg)) "unknown")
                             (length sg)))
-           (for [(q (normalized-grade-histogram (map grading-record-table sg)))]
+           (for [(q (normalized-grade-histogram-for-gt (map grading-record-table sg)))]
                 (display (format "Point range ~a : ~a %\n" (car q) (real->decimal-string (cdr q)))))))))
 
 (define (means-list wd)
