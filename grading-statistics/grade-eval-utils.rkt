@@ -296,11 +296,20 @@
                     (display (format "~a : unfinished or invalid grading table\n" f)))))
             (display (format "~a : no homework handed in\n" f)))))))
 
+(define (exercise-score i gt)
+  (second (list-ref gt i)))
+
+(define (normalized-exercise-score i gt maxt)
+  (let ([max-score (third (list-ref maxt i))])
+    (/ (exercise-score i gt) max-score)))
+
+; Real -> Real
+(define (percentify x)
+  (* 100 x))
 
 (define (means-per-exercise wd)
   (define max-template (read-grading-table (build-path wd GRADE-MAX-FILENAME)))
   (define grading-records (all-finished-grading-tables wd))
-  (define (exercise-score i gt) (second (list-ref gt i)))
   (define (max-score i) (third (list-ref max-template i)))
   (for ([i (range 1 (length max-template))])
     (let ([scores (map (lambda (gt) (exercise-score i gt)) grading-records)])
@@ -308,9 +317,18 @@
           (display (format "No grading for exercise #~a\n" i))
           (display (format "Mean for exercise #~a : ~a %\n"
                            i
-                           (real->decimal-string (* 100
-                                                    (/ (mean (map (lambda (gt) (exercise-score i gt)) grading-records))
-                                                       (max-score i))))))))))
+                           (real->decimal-string
+                            (percentify
+                             (mean
+                              (map
+                               (lambda (gt) (normalized-exercise-score i gt max-template))
+                               grading-records))))))))))
+
+(define (histo-for-exercise i wd)
+  (define max-template (read-grading-table (build-path wd GRADE-MAX-FILENAME)))
+  (for [(q (normalized-grade-histogram (map (lambda (gt) (percentify (normalized-exercise-score i gt max-template)))
+                                            (all-finished-grading-tables wd))))]
+    (display (format "Point range ~a : ~a %\n" (car q) (real->decimal-string (cdr q))))))
 
 (define (parse-schema s)
   (if (and

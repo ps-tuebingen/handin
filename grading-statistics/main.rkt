@@ -38,6 +38,11 @@
       #f
       (vector-ref args 2)))
 
+(define exercise-no
+  (if (< (vector-length args) 3)
+      #f
+      (string->number (vector-ref args 2))))
+
 (match (vector-ref args 0)
   ["stats" (stats working-directory)]
   ["list" (list-grades working-directory)]
@@ -51,6 +56,9 @@
                         (student-scores student working-directory)
                         (display-error "Please specify which student"))]
   ["means-per-exercise" (means-per-exercise working-directory)]
+  ["histo-for-exercise" (if exercise-no
+                            (histo-for-exercise exercise-no working-directory)
+                            (display-error "Please specify which exercise"))]
   
   
   ["verify" (if schema
