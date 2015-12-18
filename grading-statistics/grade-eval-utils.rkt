@@ -271,7 +271,7 @@
       (when (and (directory-exists? directory) (> (length (scores directory)) 0))
         (display (format "~a : mean score : ~a %\n"
                          f
-                         (mean (scores directory))))))))
+                         (real->decimal-string (mean (scores directory)))))))))
 
 (define (student-scores s wd)
   (for [(f (directory-list wd))]
