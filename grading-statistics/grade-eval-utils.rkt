@@ -292,8 +292,7 @@
             (display (format "~a : no homework handed in\n" f)))))))
 
 
-
-(define (means-for-exercise wd)
+(define (means-per-exercise wd)
   (define max-template (read-grading-table (build-path wd GRADE-MAX-FILENAME)))
   (define grading-records (all-finished-grading-tables wd))
   (define (exercise-score i gt) (second (list-ref gt i)))
