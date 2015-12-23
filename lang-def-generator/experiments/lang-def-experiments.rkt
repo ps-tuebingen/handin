@@ -42,13 +42,13 @@
 (define-syntax (exercise stx)
   (syntax-case stx ()
     [(_ [descr p] [tdescr maxp]) (if (string? (syntax->datum #'descr))
-                                     (if (integer? (syntax->datum #'p))
+                                     (if (exact-nonnegative-integer? (syntax->datum #'p))
                                          (if (string=? (syntax->datum #'descr) (syntax->datum #'tdescr))
                                              (if (<= (syntax->datum #'p) (syntax->datum #'maxp))
                                                  #'(list descr p)
                                                  (raise-syntax-error 'exercise-entry "too many points on exercise"))
                                              (raise-syntax-error 'exercise-entry "description doesn't match template"))
-                                         (raise-syntax-error 'exercise-entry "points not integer"))
+                                         (raise-syntax-error 'exercise-entry "points not nonnegative integer"))
                                      (raise-syntax-error 'exercise-entry "description not string"))]
     [(_ [_] _) (raise-syntax-error 'exercise-entry "exercise entry consists of two parts")]
     [(_ [] _) (raise-syntax-error 'exercise-entry "exercise entry consists of two parts")]))
