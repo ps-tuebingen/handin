@@ -1,4 +1,4 @@
-#lang s-exp "lang-def-helper-use.rkt"
+#lang s-exp "grade-max.rktd"
 
 ([grading-finished #false]
  ["Aufgabe 1 (30 pt): Das Spiel kann ausgeführt werden und die im ersten Absatz beschriebene Funktionalität ist weitestgehend umgesetzt."

@@ -1,3 +1,5 @@
+#lang s-exp "../grade-max-lang.rkt"
+
 ([grading-finished #false]
  ["Aufgabe 1 (30 pt): Das Spiel kann ausgeführt werden und die im ersten Absatz beschriebene Funktionalität ist weitestgehend umgesetzt."
   nicht-automatisch-bewertet
