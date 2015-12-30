@@ -3,6 +3,7 @@
 (provide (all-defined-out))
 (require racket/list)
 (require unstable/list)
+(require racket/function)
 (require math/statistics)
 
 (require "../handin-server/format-grade.rkt")
@@ -56,6 +57,9 @@
 (define (normalized-grade-histogram-for-gt gs)
   (normalized-grade-histogram (map grading-table-total gs)))
 
+; Real -> Real
+(define (percentify x)
+  (* 100 x))
 
 ; Path -> (union Path 'up 'same)
 ; extract the immediate directory or file name from a path
@@ -278,23 +282,78 @@
                          f
                          (real->decimal-string (mean (scores directory)))))))))
 
+; A StudentScore consists of
+; - a Path: the exercise folder.
+; - a Bool: When the student handed something in it is #t, otherwise #f.
+; - a U Points Bool: Only relevant when the second part is #t. In this case it is the points
+; the student achieved - unless grading isn't finished/erroneous, then it is #f.
+(define-struct student-score (path handin? points))
+
+; String Path -> List-of StudentScore
 (define (student-scores s wd)
-  (for [(f (directory-list wd))]
-    (define is-homework-folder (char-numeric? (first (string->list (path->string f)))))
-    (let* ([exercise-directory (build-path wd f)]
-           [student-directory (build-path exercise-directory s)]
-           [grade-files (find-all-grade-files student-directory 0)])
-      (when (and (directory-exists? exercise-directory) is-homework-folder)
-        (if (directory-exists? student-directory)
-            (when (> (length grade-files) 0)
-              (let ([grading-table (read-grading-table (car grade-files))])
-                (if (and (valid-grading-table? grading-table)
-                         (finished-grading-table? grading-table))
-                    (display (format "~a : score : ~a %\n"
-                                     f
-                                     (grading-table-total (read-grading-table (car grade-files)))))
-                    (display (format "~a : unfinished or invalid grading table\n" f)))))
-            (display (format "~a : no homework handed in\n" f)))))))
+  (filter (negate void?)
+          (for/list ([f (directory-list wd)])
+            (define is-homework-folder (char-numeric? (first (string->list (path->string f)))))
+            (let* ([exercise-directory (build-path wd f)]
+                   [student-directory (build-path exercise-directory s)]
+                   [grade-files (find-all-grade-files student-directory 0)])
+              (when (and (directory-exists? exercise-directory) is-homework-folder)
+                (if (directory-exists? student-directory)
+                    (if (> (length grade-files) 0)
+                        (let ([grading-table (read-grading-table (car grade-files))])
+                          (if (and (valid-grading-table? grading-table)
+                                   (finished-grading-table? grading-table))
+                              (make-student-score f #t (grading-table-total (read-grading-table (car grade-files))))
+                              (make-student-score f #t #f)))
+                        (make-student-score f #t #f))
+                    (make-student-score f #f #f)))))))
+
+(define (display-student-scores s wd)
+  (for ([scr (student-scores s wd)])
+    (let ([exercise-name (student-score-path scr)])
+    (if (student-score-handin? scr)
+        (if (student-score-points scr)
+            (display (format "~a : score : ~a %\n" exercise-name (student-score-points scr)))
+            (display (format "~a : unfinished or invalid grading table\n" exercise-name)))
+        (display (format "~a : no homework handed in\n" exercise-name))))))
+
+; A performance drop consists of
+; - a Path: the exercise folder for the exercise after which the drop occurs (ex. a)
+; - a Path: the exercise folder for the exercise towards which the drop occurs (ex. b)
+; - a Number: (points for ex. b) / (points for ex. a)
+(define-struct performance-drop (patha pathb ratio))
+
+(define PERFORMANCE-DROP-THRESHOLD 0.6)
+
+; String Path -> List-of PerformanceDrop
+; Returns all performance drops for the given student where the ratio is below PERFORMANCE-DROP-THRESHOLD.
+(define (performance-drops s wd)
+  (let ([scores (student-scores s wd)])
+    (filter (negate void?)
+            (for/list ([i (range (- (length scores) 1))])
+              (let* ([scr (list-ref scores i)]
+                     [nextscr (list-ref scores (+ i 1))]
+                     [scr-points (student-score-points scr)]
+                     [nextscr-points (student-score-points nextscr)])
+                (when (and (student-score-handin? scr) scr-points
+                           (student-score-handin? nextscr) nextscr-points)
+                  (let ([perf-ratio (/ nextscr-points scr-points)])
+                    (when (< perf-ratio PERFORMANCE-DROP-THRESHOLD)
+                      (performance-drop
+                       (student-score-path nextscr)
+                       (student-score-path scr)
+                       perf-ratio)))))))))
+
+(define (display-performance-drops s wd)
+  (begin (display (format "(Threshold: ~a)\n" PERFORMANCE-DROP-THRESHOLD))
+         (let ([pdrops (performance-drops s wd)])
+           (if (empty? pdrops)
+               (display "No performance drops.\n")
+               (for ([p (performance-drops s wd)])
+                 (display (format "~a : performance drop to ~a % of previous (~a)\n"
+                                  (performance-drop-patha p)
+                                  (real->decimal-string (percentify (performance-drop-ratio p)))
+                                  (performance-drop-pathb p))))))))
 
 (define (exercise-score i gt)
   (second (list-ref gt i)))
@@ -302,10 +361,6 @@
 (define (normalized-exercise-score i gt maxt)
   (let ([max-score (third (list-ref maxt i))])
     (/ (exercise-score i gt) max-score)))
-
-; Real -> Real
-(define (percentify x)
-  (* 100 x))
 
 (define (means-per-exercise wd)
   (define max-template (read-grading-table (build-path wd GRADE-MAX-FILENAME)))

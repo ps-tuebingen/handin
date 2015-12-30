@@ -53,8 +53,11 @@
   ["stats-by-studiengang" (stats-by-studiengang working-directory)]
   ["means-list" (means-list working-directory)]
   ["student-scores" (if student
-                        (student-scores student working-directory)
+                        (display-student-scores student working-directory)
                         (display-error "Please specify which student"))]
+  ["performance-drops" (if student
+                           (display-performance-drops student working-directory)
+                           (display-error "Please specify which student"))]
   ["means-per-exercise" (means-per-exercise working-directory)]
   ["histo-for-exercise" (if exercise-no
                             (histo-for-exercise exercise-no working-directory)
