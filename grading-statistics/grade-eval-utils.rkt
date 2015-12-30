@@ -336,7 +336,8 @@
                      [scr-points (student-score-points scr)]
                      [nextscr-points (student-score-points nextscr)])
                 (when (and (student-score-handin? scr) scr-points
-                           (student-score-handin? nextscr) nextscr-points)
+                           (student-score-handin? nextscr) nextscr-points
+                           (> scr-points 0))
                   (let ([perf-ratio (/ nextscr-points scr-points)])
                     (when (< perf-ratio PERFORMANCE-DROP-THRESHOLD)
                       (performance-drop
@@ -354,6 +355,23 @@
                                   (performance-drop-patha p)
                                   (real->decimal-string (percentify (performance-drop-ratio p)))
                                   (performance-drop-pathb p))))))))
+
+
+
+; Path -> List-of String
+; Returns all students with at least one performance drop where the ratio is below PERFORMANCE-DROP-THRESHOLD.
+(define (pdrop-students wd)
+  (remove-duplicates
+   (filter (negate void?)
+           (for/list ([student (remove-duplicates (map grading-record-name (all-finished-grading-tables* wd)))])
+             (when (not (empty? (performance-drops student wd)))
+               student)))))
+
+(define (display-pdrop-students wd)
+  (begin
+    (display (format "(Threshold: ~a)\n" PERFORMANCE-DROP-THRESHOLD))
+    (for ([s (pdrop-students wd)])
+      (display (format "~a\n" s)))))
 
 (define (exercise-score i gt)
   (second (list-ref gt i)))

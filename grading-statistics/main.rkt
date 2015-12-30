@@ -58,6 +58,7 @@
   ["performance-drops" (if student
                            (display-performance-drops student working-directory)
                            (display-error "Please specify which student"))]
+  ["pdrop-students" (display-pdrop-students working-directory)]
   ["means-per-exercise" (means-per-exercise working-directory)]
   ["histo-for-exercise" (if exercise-no
                             (histo-for-exercise exercise-no working-directory)
