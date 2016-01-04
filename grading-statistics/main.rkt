@@ -38,10 +38,25 @@
       #f
       (vector-ref args 2)))
 
+(define (pdrop-threshold i)
+  (if (< (vector-length args) (+ i 1))
+      #f
+      (string->number (vector-ref args i))))
+
 (define exercise-no
   (if (< (vector-length args) 3)
       #f
       (string->number (vector-ref args 2))))
+
+(define (if-student proc)
+  (if student
+      (proc)
+      (display-error "Please specify which student")))
+
+(define (if-pdrop-threshold i proc)
+  (if (pdrop-threshold i)
+      (proc (pdrop-threshold i))
+      (display-error "Please specify threshold")))
 
 (match (vector-ref args 0)
   ["stats" (stats working-directory)]
@@ -52,13 +67,14 @@
   ["histo-by-studiengang" (histo-by-studiengang working-directory)]
   ["stats-by-studiengang" (stats-by-studiengang working-directory)]
   ["means-list" (means-list working-directory)]
-  ["student-scores" (if student
-                        (display-student-scores student working-directory)
-                        (display-error "Please specify which student"))]
-  ["performance-drops" (if student
-                           (display-performance-drops student working-directory)
-                           (display-error "Please specify which student"))]
-  ["pdrop-students" (display-pdrop-students working-directory)]
+  ["student-scores" (if-student (λ () (display-student-scores student working-directory)))]
+  ["performance-drops" (if-student
+                        (λ () (if-pdrop-threshold
+                               3
+                               (λ (t) (display-performance-drops student t working-directory)))))]
+  ["pdrop-students" (if-pdrop-threshold
+                     2
+                     (λ (t) (display-pdrop-students t working-directory)))]
   ["means-per-exercise" (means-per-exercise working-directory)]
   ["histo-for-exercise" (if exercise-no
                             (histo-for-exercise exercise-no working-directory)

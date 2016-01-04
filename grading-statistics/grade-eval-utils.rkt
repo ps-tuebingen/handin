@@ -323,11 +323,9 @@
 ; - a Number: (points for ex. b) / (points for ex. a)
 (define-struct performance-drop (patha pathb ratio))
 
-(define PERFORMANCE-DROP-THRESHOLD 0.6)
-
-; String Path -> List-of PerformanceDrop
-; Returns all performance drops for the given student where the ratio is below PERFORMANCE-DROP-THRESHOLD.
-(define (performance-drops s wd)
+; String Rational Path -> List-of PerformanceDrop
+; Returns all performance drops for the given student where the ratio is below threshold t.
+(define (performance-drops s t wd)
   (let ([scores (student-scores s wd)])
     (filter (negate void?)
             (for/list ([i (range (- (length scores) 1))])
@@ -339,18 +337,18 @@
                            (student-score-handin? nextscr) nextscr-points
                            (> scr-points 0))
                   (let ([perf-ratio (/ nextscr-points scr-points)])
-                    (when (< perf-ratio PERFORMANCE-DROP-THRESHOLD)
+                    (when (< perf-ratio t)
                       (performance-drop
                        (student-score-path nextscr)
                        (student-score-path scr)
                        perf-ratio)))))))))
 
-(define (display-performance-drops s wd)
-  (begin (display (format "(Threshold: ~a)\n" PERFORMANCE-DROP-THRESHOLD))
-         (let ([pdrops (performance-drops s wd)])
+(define (display-performance-drops s t wd)
+  (begin (display (format "(Threshold: ~a)\n" t))
+         (let ([pdrops (performance-drops s t wd)])
            (if (empty? pdrops)
                (display "No performance drops.\n")
-               (for ([p (performance-drops s wd)])
+               (for ([p (performance-drops s t wd)])
                  (display (format "~a : performance drop to ~a % of previous (~a)\n"
                                   (performance-drop-patha p)
                                   (real->decimal-string (percentify (performance-drop-ratio p)))
@@ -358,19 +356,19 @@
 
 
 
-; Path -> List-of String
-; Returns all students with at least one performance drop where the ratio is below PERFORMANCE-DROP-THRESHOLD.
-(define (pdrop-students wd)
+; Path Rational -> List-of String
+; Returns all students with at least one performance drop where the ratio is below threshold t.
+(define (pdrop-students t wd)
   (remove-duplicates
    (filter (negate void?)
            (for/list ([student (remove-duplicates (map grading-record-name (all-finished-grading-tables* wd)))])
-             (when (not (empty? (performance-drops student wd)))
+             (when (not (empty? (performance-drops student t wd)))
                student)))))
 
-(define (display-pdrop-students wd)
+(define (display-pdrop-students t wd)
   (begin
-    (display (format "(Threshold: ~a)\n" PERFORMANCE-DROP-THRESHOLD))
-    (for ([s (pdrop-students wd)])
+    (display (format "(Threshold: ~a)\n" t))
+    (for ([s (pdrop-students t wd)])
       (display (format "~a\n" s)))))
 
 (define (exercise-score i gt)
