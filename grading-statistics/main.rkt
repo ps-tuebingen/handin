@@ -2,7 +2,8 @@
 
 (require racket/match
          "../handin-server/format-grade.rkt"
-         "grade-eval-utils.rkt")
+         "grade-eval-utils.rkt"
+         "student-eval-utils.rkt")
 
 ; this file simply contains the max. points schema
 (define SCHEMA-FILENAME "schema.rktd")
