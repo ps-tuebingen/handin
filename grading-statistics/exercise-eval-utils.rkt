@@ -2,7 +2,6 @@
 
 (provide (all-defined-out))
 (require racket/list)
-(require racket/function)
 (require unstable/list)
 (require math/statistics)
 
