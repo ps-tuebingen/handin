@@ -23,7 +23,7 @@
 ; sample-bin -> (Cons Bucket Number)
 (define (sample-bin->histo-elem sb)
   (define bucket-name (string-append (number->string (+ (sample-bin-min sb) 1)) ".." (number->string (sample-bin-max sb))))
-  (cons bucket-name (foldl + 0 (sample-bin-weights sb))))
+  (cons bucket-name (sample-bin-total sb)))
 
 ; (List-of Point) -> (List-of (Cons Bucket Number))
 (define (weighted-grade-histogram ps w)
