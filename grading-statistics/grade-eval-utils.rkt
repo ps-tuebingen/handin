@@ -13,52 +13,40 @@
 (define DIRECTORY-SEARCH-DEPTH-LIMIT 2)
 
 
-; Point -> Bucket
-(define (points->bucket points)
-  (cond [(< points 10) 1]
-        [(< points 20) 2]
-        [(< points 30) 3]
-        [(< points 40) 4]
-        [(< points 50) 5]
-        [(< points 60) 6]
-        [(< points 70) 7]
-        [(< points 80) 8]
-        [(< points 90) 9]
-        [else 10]))
-
-; Bucket -> String
-(define (bucket-name bucket)
-  (cond [(= bucket 1) "<10"]
-        [(= bucket 2) "10..19"]
-        [(= bucket 3) "20..29"]
-        [(= bucket 4) "30..39"]
-        [(= bucket 5) "40..49"]
-        [(= bucket 6) "50..59"]
-        [(= bucket 7) "60..69"]
-        [(= bucket 8) "70..79"]
-        [(= bucket 9) "80..89"]
-        [(= bucket 10) ">90"]))
-
-; (List-of Point) -> (List-of (Cons Bucket Number))
-(define (grade-histogram ps)
-  (map (lambda (xs) (cons (bucket-name (points->bucket (first xs))) (length xs)))
-       (sort (group-by points->bucket ps) (lambda (x y) (< (first x) (first y))))))
-
-(define (normalized-grade-histogram ps)
-  (let* ((h (grade-histogram ps))
-         (count (foldl (lambda (y x) (+ x (cdr y))) 0 h)))
-    (map (lambda (x) (cons (car x) (* 100 (/ (cdr x) count)))) h)))
-
-; (List-of FinishedGradingTable) -> (List-Of (Cons Bucket Number))
-(define (grade-histogram-for-gt gs)
-  (grade-histogram (map grading-table-total gs)))
-
-(define (normalized-grade-histogram-for-gt gs)
-  (normalized-grade-histogram (map grading-table-total gs)))
 
 ; Real -> Real
 (define (percentify x)
   (* 100 x))
+
+(define BIN-BOUNDS '(-1 10 20 30 40 50 60 70 80 90 100))
+
+; sample-bin -> (Cons Bucket Number)
+(define (sample-bin->histo-elem sb)
+  (define bucket-name (string-append (number->string (+ (sample-bin-min sb) 1)) ".." (number->string (sample-bin-max sb))))
+  (cons bucket-name (foldl + 0 (sample-bin-weights sb))))
+
+; (List-of Point) -> (List-of (Cons Bucket Number))
+(define (weighted-grade-histogram ps w)
+  (map sample-bin->histo-elem
+       (bin-samples BIN-BOUNDS <= ps
+                    (for/list ([i ps]) w))))
+
+; (List-of Point) -> (List-of (Cons Bucket Number))
+(define (grade-histogram ps)
+  (weighted-grade-histogram ps 1))
+
+; (List-of Point) -> (List-of (Cons Bucket Number))
+(define (normalized-grade-histogram ps)
+  (weighted-grade-histogram ps (percentify (/ 1 (length ps)))))
+
+; (List-of FinishedGradingTable) -> (List-of (Cons Bucket Number))
+(define (grade-histogram-for-gt gs)
+  (grade-histogram (map grading-table-total gs)))
+
+; (List-of FinishedGradingTable) -> (List-Of (Cons Bucket Number))
+(define (normalized-grade-histogram-for-gt gs)
+  (normalized-grade-histogram (map grading-table-total gs)))
+
 
 ; Path -> (union Path 'up 'same)
 ; extract the immediate directory or file name from a path
