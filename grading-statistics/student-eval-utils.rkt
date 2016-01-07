@@ -2,13 +2,16 @@
 
 (provide (all-defined-out))
 (require racket/list)
+(require racket/math)
 (require racket/function)
 (require unstable/list)
+(require math/statistics)
 
 (require "../handin-server/format-grade.rkt")
 (require "grade-eval-utils.rkt")
 
 ; Individual student-based grade evaluation
+; =========================================
 ; =========================================
 
 ; A StudentScore consists of
@@ -45,6 +48,9 @@
             (display (format "~a : score : ~a %\n" exercise-name (student-score-points scr)))
             (display (format "~a : unfinished or invalid grading table\n" exercise-name)))
         (display (format "~a : no homework handed in\n" exercise-name))))))
+
+; Performance drops
+; =================
 
 ; A performance drop consists of
 ; - a Path: the exercise folder for the exercise after which the drop occurs (ex. a)
@@ -97,3 +103,80 @@
     (display (format "(Threshold: ~a)\n" t))
     (for ([s (pdrop-students t wd)])
       (display (format "~a\n" s)))))
+
+; # of handins effects
+; ====================
+;; UNDER CONSTRUCTION 
+
+; Path -> List-of Path
+(define (homework-folders wd)
+  (define (is-homework-folder? p)
+    (and (directory-exists? p)
+         (char-numeric? (first (string->list
+                                (call-with-values
+                                 (lambda () (split-path p))
+                                 (lambda (b n d) (path->string n))))))))
+  (filter is-homework-folder? (directory-list wd #:build? #t)))
+
+; Path -> Bool
+; Whether the given file is a handin directory in the wd, i.e. a directory named SUCCESS-x, with x one of 0,...,9
+(define (handin-dir? wd)
+  (lambda (p)
+    (and (directory-exists? (build-path wd p))
+         (regexp-match #rx"^SUCCESS-[0-9]$" (path->string p)))))
+
+; String Path -> Natural
+; How often the student handed in for the respective homework (as given by wd), false when there is no directory for this student
+(define (number-of-handins s wd)
+  (let ([student-directory (build-path wd s)])
+    (if (directory-exists? student-directory)
+        (length (filter (handin-dir? student-directory) (directory-list student-directory)))
+        #f)))
+
+; String Path -> List-of Natural
+; All handin counts for the given student
+(define (list-handin-counts s wd)
+  (for/list ([f (homework-folders wd)])
+    (number-of-handins s f)))
+
+; String Path -> List-of (Real, Real)
+(define (handin-count-grade-pairs s wd)
+  (let ([scores (student-scores s wd)]
+        [handin-counts (list-handin-counts s wd)])
+    (filter (negate void?)
+            (for/list ([i (range (length scores))])
+              (when (and (student-score-handin? (list-ref scores i))
+                         (student-score-points (list-ref scores i))
+                         (list-ref handin-counts i))
+                (cons (student-score-points (list-ref scores i)) (list-ref handin-counts i)))))))
+
+; String Path -> Real
+; Correlation between # of handins and grades for the given student
+(define (handin-count-grade-correlation s wd)
+  (let ([pairs (handin-count-grade-pairs s wd)])
+    (correlation (map car pairs) (map cdr pairs))))
+
+; A handin effects flag consists of three parts which determine which students are considered:
+; - a Natural: the minimum number of homeworks a student has to have handed in
+; - a Rational between 0 and 100: the minimum average score
+; - a Rational between 0 and 100: the maximum average score
+(define-struct he-flag (hw-min score-min score-max))
+
+; Path (U he-flag #f) -> List-of (String, Real)
+; Lists handin-count - grade correlation for all students when the second parameter is #f.
+; Otherwise, whether a student is considered depends upon the handin effects flag.
+(define (list-handin-count-grade-correlations wd fl)
+  (define (sfilter p) (if fl
+                          (and (> (length (handin-count-grade-pairs (car p) wd)) (he-flag-hw-min fl))
+                               (let ([m (mean (filter number? (map student-score-points (student-scores (car p) wd))))])
+                                 (and (> m (he-flag-score-min fl)) (< m (he-flag-score-max fl)))))
+                          #t))
+  (filter sfilter
+          (map (lambda (s) (cons s (handin-count-grade-correlation s wd)))
+               (remove-duplicates (map grading-record-name (all-finished-grading-tables* wd))))))
+
+; Path (U he-flag #f) -> Real
+; Mean handin-count - grade correlation over all students
+; The second parameter works as given for list-handin-count-grade-correlations (i.e. is possibly a handin effects flag).
+(define (mean-handin-count-grade-correlation wd fl)
+  (mean (filter (negate nan?) (map cdr (list-handin-count-grade-correlations wd fl)))))
