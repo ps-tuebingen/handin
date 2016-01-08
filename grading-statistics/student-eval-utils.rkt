@@ -153,7 +153,9 @@
         (length (filter (handin-dir? student-directory) (directory-list student-directory)))
         #f)))
 
-; Idea for the following: fix the homework, then consider how scores and #handins correlate (calculated over all students)
+; Approach A:
+; -----------
+; fix the homework, then consider how scores and #handins correlate (calculated over all students)
 
 ; Path Path -> List-of Natural
 ; Lists the numbers of handins for the respective homework (as given by hwd) for all students which have handed in this hw
@@ -177,3 +179,17 @@
 (define (handin-count-grade-correlation wd hwd [min 0] [max +inf.0])
   (correlation (list-points wd hwd min max) (list-numbers-of-handins wd hwd min max)))
 
+; Approach B:
+; -----------
+; consider the mean # of handins and mean score of each student and how these means correlate
+
+(define (all-handin-counts-for-student s wd)
+  (filter (negate void?)
+          (for/list ([f (directory-list wd)])
+            (define is-homework-folder (char-numeric? (first (string->list (path->string f)))))
+            (let ([exercise-directory (build-path wd f)])
+              (when (and (directory-exists? exercise-directory) is-homework-folder)
+                (number-of-handins s exercise-directory))))))
+; TODO: extract code shared with student-scores into some abstraction(s)
+
+; TODO: rest of approach B
