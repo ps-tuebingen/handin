@@ -5,6 +5,7 @@
 (require racket/math)
 (require racket/function)
 (require unstable/list)
+(require racket/bool)
 (require math/statistics)
 
 (require "../handin-server/format-grade.rkt")
@@ -21,24 +22,32 @@
 ; the student achieved - unless grading isn't finished/erroneous, then it is #f.
 (define-struct student-score (path handin? points))
 
+; String Path -> StudentScore
+; The student's score according to the student's directory sd (directly contains grade file)
+; Optional argument: the name of the homework
+(define (retrieve-student-score sd)
+  (let ([f (list-ref (reverse (explode-path sd)) 1)])
+    (if (directory-exists? sd)
+        (let ([grade-files (find-all-grade-files sd 0)])
+          (if (> (length grade-files) 0)
+              (let ([grading-table (read-grading-table (car grade-files))])
+                (if (and (valid-grading-table? grading-table)
+                         (finished-grading-table? grading-table))
+                    (make-student-score f #t (grading-table-total (read-grading-table (car grade-files))))
+                    (make-student-score f #t #f)))
+              (make-student-score f #t #f)))
+        (make-student-score f #f #f))))
+
 ; String Path -> List-of StudentScore
+; The list of all scores for the given student (over all homework subdirectories in the wd)
 (define (student-scores s wd)
   (filter (negate void?)
           (for/list ([f (directory-list wd)])
             (define is-homework-folder (char-numeric? (first (string->list (path->string f)))))
             (let* ([exercise-directory (build-path wd f)]
-                   [student-directory (build-path exercise-directory s)]
-                   [grade-files (find-all-grade-files student-directory 0)])
+                   [student-directory (build-path exercise-directory s)])
               (when (and (directory-exists? exercise-directory) is-homework-folder)
-                (if (directory-exists? student-directory)
-                    (if (> (length grade-files) 0)
-                        (let ([grading-table (read-grading-table (car grade-files))])
-                          (if (and (valid-grading-table? grading-table)
-                                   (finished-grading-table? grading-table))
-                              (make-student-score f #t (grading-table-total (read-grading-table (car grade-files))))
-                              (make-student-score f #t #f)))
-                        (make-student-score f #t #f))
-                    (make-student-score f #f #f)))))))
+                (retrieve-student-score student-directory))))))
 
 (define (display-student-scores s wd)
   (for ([scr (student-scores s wd)])
@@ -48,6 +57,17 @@
             (display (format "~a : score : ~a %\n" exercise-name (student-score-points scr)))
             (display (format "~a : unfinished or invalid grading table\n" exercise-name)))
         (display (format "~a : no homework handed in\n" exercise-name))))))
+
+; Path (U #f Points) (U #f Points) -> List-of String
+; List all students that have a graded handin, respective to the given homework directory hwd
+; With the optional arguments min and max, one can exclude students which have average (over all hw)
+; grades below or above a certain number of points
+(define (students-with-graded-handins wd hwd [min 0] [max +inf.0])
+  (filter (lambda (s) (and
+                       (student-score-points (retrieve-student-score (build-path hwd s)))
+                       (let ([m (mean (filter (negate false?) (map student-score-points (student-scores s wd))))])
+                         (and (> m min) (< m max)))))
+          (remove-duplicates (map get-user-name-from-path (find-all-grade-files hwd 1)))))
 
 ; Performance drops
 ; =================
@@ -133,50 +153,27 @@
         (length (filter (handin-dir? student-directory) (directory-list student-directory)))
         #f)))
 
-; String Path -> List-of Natural
-; All handin counts for the given student
-(define (list-handin-counts s wd)
-  (for/list ([f (homework-folders wd)])
-    (number-of-handins s f)))
+; Idea for the following: fix the homework, then consider how scores and #handins correlate (calculated over all students)
 
-; String Path -> List-of (Real, Real)
-(define (handin-count-grade-pairs s wd)
-  (let ([scores (student-scores s wd)]
-        [handin-counts (list-handin-counts s wd)])
-    (filter (negate void?)
-            (for/list ([i (range (length scores))])
-              (when (and (student-score-handin? (list-ref scores i))
-                         (student-score-points (list-ref scores i))
-                         (list-ref handin-counts i))
-                (cons (student-score-points (list-ref scores i)) (list-ref handin-counts i)))))))
+; Path Path -> List-of Natural
+; Lists the numbers of handins for the respective homework (as given by hwd) for all students which have handed in this hw
+; The optional arguments min and max are the same as for student-with-graded-handins
+; and allow to exclude certain students.
+(define (list-numbers-of-handins wd hwd [min 0] [max +inf.0])
+  (map (lambda (s) (number-of-handins s hwd))
+       (students-with-graded-handins wd hwd min max)))
 
-; String Path -> Real
-; Correlation between # of handins and grades for the given student
-(define (handin-count-grade-correlation s wd)
-  (let ([pairs (handin-count-grade-pairs s wd)])
-    (correlation (map car pairs) (map cdr pairs))))
+; Path -> List-of Points
+; Lists the scores for the respective homework (as given by hwd) for all students
+; The students' order is identical to that returned by list-numbers-of-handins.
+; The optional arguments min and max are the same as for student-with-graded-handins
+; and allow to exclude certain students.
+(define (list-points wd hwd [min 0] [max +inf.0])
+  (map (lambda (s) (student-score-points (retrieve-student-score (build-path hwd s))))
+       (students-with-graded-handins wd hwd min max)))
 
-; A handin effects flag consists of three parts which determine which students are considered:
-; - a Natural: the minimum number of homeworks a student has to have handed in
-; - a Rational between 0 and 100: the minimum average score
-; - a Rational between 0 and 100: the maximum average score
-(define-struct he-flag (hw-min score-min score-max))
+; Path -> Real
+; Correlation between number of handins and grades for the homework given by hwd
+(define (handin-count-grade-correlation wd hwd [min 0] [max +inf.0])
+  (correlation (list-points wd hwd min max) (list-numbers-of-handins wd hwd min max)))
 
-; Path (U he-flag #f) -> List-of (String, Real)
-; Lists handin-count - grade correlation for all students when the second parameter is #f.
-; Otherwise, whether a student is considered depends upon the handin effects flag.
-(define (list-handin-count-grade-correlations wd fl)
-  (define (sfilter p) (if fl
-                          (and (> (length (handin-count-grade-pairs (car p) wd)) (he-flag-hw-min fl))
-                               (let ([m (mean (filter number? (map student-score-points (student-scores (car p) wd))))])
-                                 (and (> m (he-flag-score-min fl)) (< m (he-flag-score-max fl)))))
-                          #t))
-  (filter sfilter
-          (map (lambda (s) (cons s (handin-count-grade-correlation s wd)))
-               (remove-duplicates (map grading-record-name (all-finished-grading-tables* wd))))))
-
-; Path (U he-flag #f) -> Real
-; Mean handin-count - grade correlation over all students
-; The second parameter works as given for list-handin-count-grade-correlations (i.e. is possibly a handin effects flag).
-(define (mean-handin-count-grade-correlation wd fl)
-  (mean (filter (negate nan?) (map cdr (list-handin-count-grade-correlations wd fl)))))
