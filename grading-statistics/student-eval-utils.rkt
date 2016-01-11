@@ -38,6 +38,17 @@
               (make-student-score f #t #f)))
         (make-student-score f #f #f))))
 
+; Path -> List-of Path
+; The list of all homework folders in the wd
+(define (homework-folders wd)
+  (define (is-homework-folder? p)
+    (and (directory-exists? p)
+         (char-numeric? (first (string->list
+                                (call-with-values
+                                 (lambda () (split-path p))
+                                 (lambda (b n d) (path->string n))))))))
+  (filter is-homework-folder? (directory-list wd #:build? #t)))
+
 ; String Path -> List-of StudentScore
 ; The list of all scores for the given student (over all homework subdirectories in the wd)
 (define (student-scores s wd)
@@ -68,6 +79,12 @@
                        (let ([m (mean (filter (negate false?) (map student-score-points (student-scores s wd))))])
                          (and (> m min) (< m max)))))
           (remove-duplicates (map get-user-name-from-path (find-all-grade-files hwd 1)))))
+
+; Path -> List-of String
+; List all students that have a graded handin for any of the homeworks
+(define (students-with-any-graded-handin wd)
+  (remove-duplicates (append-map (lambda (hwd) (students-with-graded-handins wd hwd))
+                                  (homework-folders wd))))
 
 ; Performance drops
 ; =================
@@ -128,16 +145,6 @@
 ; ====================
 ;; UNDER CONSTRUCTION 
 
-; Path -> List-of Path
-(define (homework-folders wd)
-  (define (is-homework-folder? p)
-    (and (directory-exists? p)
-         (char-numeric? (first (string->list
-                                (call-with-values
-                                 (lambda () (split-path p))
-                                 (lambda (b n d) (path->string n))))))))
-  (filter is-homework-folder? (directory-list wd #:build? #t)))
-
 ; Path -> Bool
 ; Whether the given file is a handin directory in the wd, i.e. a directory named SUCCESS-x, with x one of 0,...,9
 (define (handin-dir? wd)
@@ -183,6 +190,8 @@
 ; -----------
 ; consider the mean # of handins and mean score of each student and how these means correlate
 
+; String Path -> List-of Natural
+; Lists all handin counts for the given student
 (define (all-handin-counts-for-student s wd)
   (filter (negate void?)
           (for/list ([f (directory-list wd)])
@@ -192,4 +201,25 @@
                 (number-of-handins s exercise-directory))))))
 ; TODO: extract code shared with student-scores into some abstraction(s)
 
-; TODO: rest of approach B
+; Path -> List-of Real
+; List the mean handin counts for all students
+(define (mean-handin-counts wd)
+  (map (lambda (s) (mean (filter (negate false?)
+                                 (all-handin-counts-for-student s wd))))
+       (students-with-any-graded-handin wd)))
+
+; Path -> List-of Real
+; List the mean grades for all students
+(define (mean-grades wd)
+  (map (lambda (s) (mean (filter (negate false?)
+                                 (map student-score-points (student-scores s wd)))))
+       (students-with-any-graded-handin wd)))
+
+; Path -> Real
+; Correlation between mean handin counts and mean grades (over all students)
+(define (mean-handin-count-mean-grade-correlation wd)
+  (correlation (mean-grades wd) (mean-handin-counts wd)))
+
+;(require plot)
+;(let ([wd "../../LocalPathForAllHandins/production"])
+;  (plot (points (map vector (mean-handin-counts wd) (mean-grades wd)))))
