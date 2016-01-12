@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require racket/match
+         racket/string
          "../handin-server/format-grade.rkt"
          "grade-eval-utils.rkt"
          "student-eval-utils.rkt"
@@ -11,8 +12,16 @@
 
 (define args (current-command-line-arguments))
 
+(define options
+  (list "stats" "list" "unfinished" "erroneous" "verify" "histogram" "histo-by-studiengang" "stats-by-studiengang" "means-list"
+        "student-scores" "performance-drops" "pdrop-students" "mean-handin-numbers"
+        "means-per-exercise" "histo-for-exercise"))
+
 (define (usage)
-  (display "usage: racket -l grading-statistics (stats|list|unfinished|erroneous|verify|histogram|histo-by-studiengang|stats-by-studiengang) <path>\n"))
+  (display (string-append "usage: racket -l grading-statistics ("
+                          (string-join options "|")
+                          ") <path> <arg> ... \n"
+                          "for the arguments see the respective option \n")))
 
 (define (display-error e)
   (begin
