@@ -180,6 +180,22 @@
 (define (handin-count-grade-correlation wd hwd [min 0] [max +inf.0])
   (correlation (list-points wd hwd min max) (list-numbers-of-handins wd hwd min max)))
 
+; Plot points (y-axis) vs. handin counts (x-axis)
+(define (plot-points-vs-handin-counts wd hw)
+  (plot (points (map vector
+                     (list-numbers-of-handins wd (build-path wd hw))
+                     (list-points wd (build-path wd hw))))))
+
+; Natural Path Path -> Real
+; Median points for students with handin count c
+; TODO
+;(define (median-points-for-handin-count c wd hwd)
+;  ...)
+
+; Plot curve of median grades per handin count
+;(define (plot-median-points-per-handin-count wd hw)
+;  (plot (points (map (lambda (c) (vector c (median-points-for-handin-count c wd hwd))) (range 1 10)))))
+
 ; Approach B:
 ; -----------
 ; consider the mean # of handins and mean score of each student and how these means correlate
