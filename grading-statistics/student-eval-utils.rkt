@@ -217,14 +217,5 @@
 
 ; Display the mean number of handins for each homework
 (define (display-mean-handin-numbers wd)
-  (for ([hw (list "01-Erste-Schritte"			
-                  "02-Ausdruecke"				
-                  "03-Konstanten-und-Funktionen"	
-                  "04-Entwurfsrezept"	
-                  "05-Top-Down-Entwurf"		
-                  "06-Datentypen"
-                  "07-Big-Bang-Mehr-Datentypen"
-                  "08-Rekursive-Datentypen"
-                  "09-Breakout"
-                  "10-Patternmatching-S-Expressions")])
+  (for ([hw (homework-folders wd)])
     (display (string-append (real->decimal-string (mean (list-numbers-of-handins wd (build-path wd hw)))) "\n"))))
