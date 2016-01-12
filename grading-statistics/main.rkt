@@ -69,6 +69,7 @@
   ["histo-by-studiengang" (histo-by-studiengang working-directory)]
   ["stats-by-studiengang" (stats-by-studiengang working-directory)]
   ["means-list" (means-list working-directory)]
+  
   ["student-scores" (if-student (λ () (display-student-scores student working-directory)))]
   ["performance-drops" (if-student
                         (λ () (if-pdrop-threshold
@@ -77,6 +78,9 @@
   ["pdrop-students" (if-pdrop-threshold
                      2
                      (λ (t) (display-pdrop-students t working-directory)))]
+
+  ["mean-handin-numbers" (display-mean-handin-numbers working-directory)]
+  
   ["means-per-exercise" (means-per-exercise working-directory)]
   ["histo-for-exercise" (if exercise-no
                             (histo-for-exercise exercise-no working-directory)
