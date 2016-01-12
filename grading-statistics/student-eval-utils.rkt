@@ -52,13 +52,7 @@
 ; String Path -> List-of StudentScore
 ; The list of all scores for the given student (over all homework subdirectories in the wd)
 (define (student-scores s wd)
-  (filter (negate void?)
-          (for/list ([f (directory-list wd)])
-            (define is-homework-folder (char-numeric? (first (string->list (path->string f)))))
-            (let* ([exercise-directory (build-path wd f)]
-                   [student-directory (build-path exercise-directory s)])
-              (when (and (directory-exists? exercise-directory) is-homework-folder)
-                (retrieve-student-score student-directory))))))
+  (map (lambda (d) (retrieve-student-score (build-path d s))) (homework-folders wd)))
 
 (define (display-student-scores s wd)
   (for ([scr (student-scores s wd)])
@@ -193,13 +187,7 @@
 ; String Path -> List-of Natural
 ; Lists all handin counts for the given student
 (define (all-handin-counts-for-student s wd)
-  (filter (negate void?)
-          (for/list ([f (directory-list wd)])
-            (define is-homework-folder (char-numeric? (first (string->list (path->string f)))))
-            (let ([exercise-directory (build-path wd f)])
-              (when (and (directory-exists? exercise-directory) is-homework-folder)
-                (number-of-handins s exercise-directory))))))
-; TODO: extract code shared with student-scores into some abstraction(s)
+  (map (lambda (d) (number-of-handins s d)) homework-folders))
 
 ; Path -> List-of Real
 ; List the mean handin counts for all students
