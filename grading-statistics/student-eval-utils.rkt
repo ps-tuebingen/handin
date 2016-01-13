@@ -6,7 +6,10 @@
 (require racket/function)
 (require unstable/list)
 (require racket/bool)
+(require math/array)
+(require math/matrix)
 (require math/statistics)
+(require plot)
 
 (require "../handin-server/format-grade.rkt")
 (require "grade-eval-utils.rkt")
@@ -186,15 +189,38 @@
                      (list-numbers-of-handins wd (build-path wd hw))
                      (list-points wd (build-path wd hw))))))
 
+; Approach A.1:
+; Plots for median grades for each handin count
+
 ; Natural Path Path -> Real
 ; Median points for students with handin count c
-; TODO
-;(define (median-points-for-handin-count c wd hwd)
-;  ...)
+(define (median-points-for-handin-count c wd hwd)
+  (let* ([handin-numbers (list-numbers-of-handins wd hwd)]
+         [indices (filter (lambda (i) (= (list-ref handin-numbers i) c)) (range (length handin-numbers)))]
+         [points (list-points wd hwd)])
+    (median < (map (lambda (i) (list-ref points i)) indices))))
 
-; Plot curve of median grades per handin count
-;(define (plot-median-points-per-handin-count wd hw)
-;  (plot (points (map (lambda (c) (vector c (median-points-for-handin-count c wd hwd))) (range 1 10)))))
+; The maximum possible number of handins per homework for a student
+(define MAX-HANDINS 10)
+
+; Computes the regression polynomial of grade n (no math library available for it)
+(define ((regression-polynomial xs ys n) x)
+    (let* ([vandermonde (vandermonde-matrix xs (+ n 1))]
+           [vandermonde-t (matrix-transpose vandermonde)]
+           [coeffs (matrix->vector (matrix-solve (matrix* vandermonde-t vandermonde)
+                                                 (matrix* vandermonde-t (->col-matrix ys))))])
+      (for/sum ([c coeffs]
+                [i (in-naturals)])
+        (* c (expt x i)))))
+
+; Plot median grades per handin count, and additionally a polynomial regression curve of grade n
+(define (plot-polyreg-median-points-per-handin-count n wd hwd)
+  (let ([xs (range 1 (+ MAX-HANDINS 1))]
+        [ys (map (lambda (c) (median-points-for-handin-count c wd hwd)) (range 1 (+ MAX-HANDINS 1)))])
+    (plot (list (points   (map vector xs ys))
+                (function (regression-polynomial xs ys n)))
+          #:x-label "# of handins"
+          #:y-label "median grade")))
 
 ; Approach B:
 ; -----------
