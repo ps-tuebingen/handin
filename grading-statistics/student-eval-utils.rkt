@@ -214,9 +214,10 @@
         (* c (expt x i)))))
 
 ; Plot median grades per handin count, and additionally a polynomial regression curve of grade n
-(define (plot-polyreg-median-points-per-handin-count n wd hwd)
-  (let ([xs (range 1 (+ MAX-HANDINS 1))]
-        [ys (map (lambda (c) (median-points-for-handin-count c wd hwd)) (range 1 (+ MAX-HANDINS 1)))])
+; Optional arguments: the minimum and maximum handin numbers to be considered
+(define (plot-polyreg-median-points-per-handin-count n wd hwd [min 1] [max MAX-HANDINS])
+  (let ([xs (range min (+ max 1))]
+        [ys (map (lambda (c) (median-points-for-handin-count c wd hwd)) (range min (+ max 1)))])
     (plot (list (points   (map vector xs ys))
                 (function (regression-polynomial xs ys n)))
           #:x-label "# of handins"
