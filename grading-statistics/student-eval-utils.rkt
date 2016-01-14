@@ -182,11 +182,12 @@
 (define (handin-count-grade-correlation wd hw [min 0] [max +inf.0])
   (correlation (list-points wd hw min max) (list-numbers-of-handins wd hw min max)))
 
-; Plot points (y-axis) vs. handin counts (x-axis)
-(define (plot-points-vs-handin-counts wd hw)
-  (plot (points (map vector
-                     (list-numbers-of-handins wd hw)
-                     (list-points wd hw)))))
+; Plot points (y-axis) vs. handin counts (x-axis), and additionally a polynomial regression curve of grade n
+(define (plot-polyreg-points-vs-handin-counts n wd hw)
+  (let ([xs (list-numbers-of-handins wd hw)]
+        [ys (list-points wd hw)])
+    (plot (list (points (map vector xs ys))
+                (function (regression-polynomial xs ys n))))))
 
 ; Approach A.1:
 ; Plots for median grades for each handin count
