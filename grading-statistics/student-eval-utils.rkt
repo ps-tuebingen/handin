@@ -6,12 +6,11 @@
 (require racket/function)
 (require unstable/list)
 (require racket/bool)
-(require math/array)
-(require math/matrix)
 (require math/statistics)
 (require plot)
 
 (require "../handin-server/format-grade.rkt")
+(require "utils.rkt")
 (require "grade-eval-utils.rkt")
 
 ; Individual student-based grade evaluation
@@ -202,16 +201,6 @@
 
 ; The maximum possible number of handins per homework for a student
 (define MAX-HANDINS 10)
-
-; Computes the regression polynomial of grade n (no math library available for it)
-(define ((regression-polynomial xs ys n) x)
-    (let* ([vandermonde (vandermonde-matrix xs (+ n 1))]
-           [vandermonde-t (matrix-transpose vandermonde)]
-           [coeffs (matrix->vector (matrix-solve (matrix* vandermonde-t vandermonde)
-                                                 (matrix* vandermonde-t (->col-matrix ys))))])
-      (for/sum ([c coeffs]
-                [i (in-naturals)])
-        (* c (expt x i)))))
 
 ; Plot median grades per handin count, and additionally a polynomial regression curve of grade n
 ; Optional arguments: the minimum and maximum handin numbers to be considered
