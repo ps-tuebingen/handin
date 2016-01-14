@@ -44,18 +44,18 @@
 ; Path -> List-of Path
 ; The list of all homework folders in the wd
 (define (homework-folders wd)
+  (define (filename p) (call-with-values
+                        (lambda () (split-path p))
+                        (lambda (b n d) (path->string n))))
   (define (is-homework-folder? p)
     (and (directory-exists? p)
-         (char-numeric? (first (string->list
-                                (call-with-values
-                                 (lambda () (split-path p))
-                                 (lambda (b n d) (path->string n))))))))
-  (filter is-homework-folder? (directory-list wd #:build? #t)))
+         (char-numeric? (first (string->list (filename p))))))
+  (map filename (filter is-homework-folder? (directory-list wd #:build? #t))))
 
 ; String Path -> List-of StudentScore
 ; The list of all scores for the given student (over all homework subdirectories in the wd)
 (define (student-scores s wd)
-  (map (lambda (d) (retrieve-student-score (build-path d s))) (homework-folders wd)))
+  (map (lambda (d) (retrieve-student-score (build-path wd d s))) (homework-folders wd)))
 
 (define (display-student-scores s wd)
   (for ([scr (student-scores s wd)])
@@ -67,21 +67,21 @@
         (display (format "~a : no homework handed in\n" exercise-name))))))
 
 ; Path (U #f Points) (U #f Points) -> List-of String
-; List all students that have a graded handin, respective to the given homework directory hwd
-; With the optional arguments min and max, one can exclude students which have average (over all hw)
+; List all students that have a graded handin, respective to the given homework hw
+; With the optional arguments min and max, one can exclude students which have average (over all homeworks)
 ; grades below or above a certain number of points
-(define (students-with-graded-handins wd hwd [min 0] [max +inf.0])
+(define (students-with-graded-handins wd hw [min 0] [max +inf.0])
   (filter (lambda (s) (and
-                       (student-score-points (retrieve-student-score (build-path hwd s)))
+                       (student-score-points (retrieve-student-score (build-path wd hw s)))
                        (let ([m (mean (filter (negate false?) (map student-score-points (student-scores s wd))))])
                          (and (> m min) (< m max)))))
-          (remove-duplicates (map get-user-name-from-path (find-all-grade-files hwd 1)))))
+          (remove-duplicates (map get-user-name-from-path (find-all-grade-files (build-path wd hw) 1)))))
 
 ; Path -> List-of String
 ; List all students that have a graded handin for any of the homeworks
 (define (students-with-any-graded-handin wd)
-  (remove-duplicates (append-map (lambda (hwd) (students-with-graded-handins wd hwd))
-                                  (homework-folders wd))))
+  (remove-duplicates (append-map (lambda (hw) (students-with-graded-handins wd hw))
+                                 (homework-folders wd))))
 
 ; Performance drops
 ; =================
@@ -150,9 +150,9 @@
          (regexp-match #rx"^SUCCESS-[0-9]$" (path->string p)))))
 
 ; String Path -> Natural
-; How often the student handed in for the respective homework (as given by wd), false when there is no directory for this student
-(define (number-of-handins s wd)
-  (let ([student-directory (build-path wd s)])
+; How often the student handed in for the respective homework hw, false when there is no directory for this student
+(define (number-of-handins s wd hw)
+  (let ([student-directory (build-path (build-path wd hw) s)])
     (if (directory-exists? student-directory)
         (length (filter (handin-dir? student-directory) (directory-list student-directory)))
         #f)))
@@ -162,42 +162,42 @@
 ; fix the homework, then consider how scores and #handins correlate (calculated over all students)
 
 ; Path Path -> List-of Natural
-; Lists the numbers of handins for the respective homework (as given by hwd) for all students which have handed in this hw
+; Lists the numbers of handins for the respective homework hw for all students which have handed in this hw
 ; The optional arguments min and max are the same as for student-with-graded-handins
 ; and allow to exclude certain students.
-(define (list-numbers-of-handins wd hwd [min 0] [max +inf.0])
-  (map (lambda (s) (number-of-handins s hwd))
-       (students-with-graded-handins wd hwd min max)))
+(define (list-numbers-of-handins wd hw [min 0] [max +inf.0])
+  (map (lambda (s) (number-of-handins s wd hw))
+       (students-with-graded-handins wd hw min max)))
 
 ; Path -> List-of Points
-; Lists the scores for the respective homework (as given by hwd) for all students
+; Lists the scores for the respective homework hw for all students
 ; The students' order is identical to that returned by list-numbers-of-handins.
 ; The optional arguments min and max are the same as for student-with-graded-handins
 ; and allow to exclude certain students.
-(define (list-points wd hwd [min 0] [max +inf.0])
-  (map (lambda (s) (student-score-points (retrieve-student-score (build-path hwd s))))
-       (students-with-graded-handins wd hwd min max)))
+(define (list-points wd hw [min 0] [max +inf.0])
+  (map (lambda (s) (student-score-points (retrieve-student-score (build-path (build-path wd hw) s))))
+       (students-with-graded-handins wd hw min max)))
 
 ; Path -> Real
-; Correlation between number of handins and grades for the homework given by hwd
-(define (handin-count-grade-correlation wd hwd [min 0] [max +inf.0])
-  (correlation (list-points wd hwd min max) (list-numbers-of-handins wd hwd min max)))
+; Correlation between number of handins and grades for the homework hw
+(define (handin-count-grade-correlation wd hw [min 0] [max +inf.0])
+  (correlation (list-points wd hw min max) (list-numbers-of-handins wd hw min max)))
 
 ; Plot points (y-axis) vs. handin counts (x-axis)
 (define (plot-points-vs-handin-counts wd hw)
   (plot (points (map vector
-                     (list-numbers-of-handins wd (build-path wd hw))
-                     (list-points wd (build-path wd hw))))))
+                     (list-numbers-of-handins wd hw)
+                     (list-points wd hw)))))
 
 ; Approach A.1:
 ; Plots for median grades for each handin count
 
 ; Natural Path Path -> Real
 ; Median points for students with handin count c
-(define (median-points-for-handin-count c wd hwd)
-  (let* ([handin-numbers (list-numbers-of-handins wd hwd)]
+(define (median-points-for-handin-count c wd hw)
+  (let* ([handin-numbers (list-numbers-of-handins wd hw)]
          [indices (filter (lambda (i) (= (list-ref handin-numbers i) c)) (range (length handin-numbers)))]
-         [points (list-points wd hwd)])
+         [points (list-points wd hw)])
     (median < (map (lambda (i) (list-ref points i)) indices))))
 
 ; The maximum possible number of handins per homework for a student
@@ -215,9 +215,9 @@
 
 ; Plot median grades per handin count, and additionally a polynomial regression curve of grade n
 ; Optional arguments: the minimum and maximum handin numbers to be considered
-(define (plot-polyreg-median-points-per-handin-count n wd hwd [min 1] [max MAX-HANDINS])
+(define (plot-polyreg-median-points-per-handin-count n wd hw [min 1] [max MAX-HANDINS])
   (let ([xs (range min (+ max 1))]
-        [ys (map (lambda (c) (median-points-for-handin-count c wd hwd)) (range min (+ max 1)))])
+        [ys (map (lambda (c) (median-points-for-handin-count c wd hw)) (range min (+ max 1)))])
     (plot (list (points   (map vector xs ys))
                 (function (regression-polynomial xs ys n)))
           #:x-label "# of handins"
