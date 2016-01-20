@@ -32,13 +32,13 @@
     [(id _) (symbol=? (syntax->datum #'id) 'grading-finished)]))
 
 ; List-of Syntax -> List-of String
-; (syntax of the form (string-literal symbol integer-literal)) 
+; (syntax of the form (string-literal symbol integer-literal))
 (define-for-syntax (description stx)
   (syntax-case stx ()
     [(d a p) (syntax->datum #'d)]))
 
 ; List-of Syntax -> List-of Integer
-; (syntax of the form (string-literal symbol integer-literal)) 
+; (syntax of the form (string-literal symbol integer-literal))
 (define-for-syntax (maxpoints stx)
   (syntax-case stx ()
     [(d a p) (syntax->datum #'p)]))
@@ -57,7 +57,7 @@
               (provide grading-finished)
               (provide #%datum)
               (provide #%app)
-              
+
               (define-syntax (gf-module-begin stx)
                 (syntax-case stx ()
                   [(_ (g-f exrcs (... ...))) (if (grading-finished-entry? #'g-f)
@@ -66,7 +66,7 @@
                                                        #'(#%module-begin (g-f #t)))
                                                      (raise-syntax-error 'top-level "wrong number of exercise entries"))
                                                  (raise-syntax-error 'top-level "first item not 'grading finished' entry"))]))
-              
+
               (define-syntax (grading-finished stx)
                 (syntax-case stx ()
                   [(_ bool) (if (boolean? (syntax->datum #'bool))
