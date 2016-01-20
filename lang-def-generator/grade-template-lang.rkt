@@ -6,8 +6,8 @@
 (provide (rename-out [gf-def-module-begin #%module-begin]))
 
 (provide #%app)
-
 (provide #%datum)
+(provide #%top-interaction) ; Allow running REPL from `grade-template.rktd`
 
 ; Syntax helper for checking exercise entry
 (define-for-syntax (check-exercise descr maxp)
@@ -55,6 +55,7 @@
               (provide grading-finished)
               (provide #%datum)
               (provide #%app)
+              (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
 
               (define-syntax (gf-module-begin stx)
                 (syntax-case stx ()
