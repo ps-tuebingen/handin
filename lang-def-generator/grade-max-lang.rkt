@@ -5,11 +5,9 @@
 
 (provide (rename-out [gf-def-module-begin #%module-begin]))
 
-(provide (for-syntax list))
+(provide #%app)
 
-(provide (for-syntax #%app))
-
-(provide (for-syntax #%datum))
+(provide #%datum)
 
 ; Syntax helper for checking exercise entry
 (define-for-syntax (check-exercise descr maxp)
