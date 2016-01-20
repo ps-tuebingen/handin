@@ -1,4 +1,4 @@
-#lang s-exp "../grade-template-lang.rkt"
+#lang s-exp utue-info1-lang-def/grade-template-lang
 
 ([grading-finished #false]
  ["Aufgabe 1 (30 pt): Das Spiel kann ausgeführt werden und die im ersten Absatz beschriebene Funktionalität ist weitestgehend umgesetzt."
