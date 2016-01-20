@@ -68,5 +68,5 @@
               (define-syntax (grading-finished stx)
                 (syntax-case stx ()
                   [(_ bool) (if (boolean? (syntax->datum #'bool))
-                                #'bool
+                                #'void
                                 (raise-syntax-error 'grading-finished-entry "not a boolean"))]))))]))
