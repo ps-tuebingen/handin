@@ -20,10 +20,10 @@
                        (if (string=? (syntax->datum #'d) tdescr)
                            (if (<= (syntax->datum #'p) tmaxp)
                                #t
-                               (raise-syntax-error 'exercise-entry "too many points on exercise"))
-                           (raise-syntax-error 'exercise-entry "description doesn't match template"))
-                       (raise-syntax-error 'exercise-entry "points not nonnegative integer"))
-                   (raise-syntax-error 'exercise-entry "description not string"))]))))
+                               (raise-syntax-error 'exercise-entry "too many points on exercise" #'p))
+                           (raise-syntax-error 'exercise-entry "description doesn't match template" #'d))
+                       (raise-syntax-error 'exercise-entry "points not nonnegative integer" #'p))
+                   (raise-syntax-error 'exercise-entry "description not string" #'d))]))))
 
 (define-for-syntax (grading-finished-entry? stx)
   (syntax-case stx ()
@@ -63,8 +63,10 @@
                                                  (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
                                                      (when (andmap (check-exercise (list #,@descr) (list #,@maxp)) (syntax->list #'(exrcs (... ...))) (range #,(length maxp)))
                                                        #'(#%module-begin (g-f #t)))
+                                                     ; What should the source location be?
                                                      (raise-syntax-error 'top-level "wrong number of exercise entries"))
-                                                 (raise-syntax-error 'top-level "first item not 'grading finished' entry"))]))
+                                                 ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
+                                                 (raise-syntax-error 'top-level  "first item not a valid 'grading finished' entry" #'g-f))]))
 
               (define-syntax (grading-finished stx)
                 (syntax-case stx ()
