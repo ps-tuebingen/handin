@@ -16,13 +16,15 @@
           [tmaxp (list-ref maxp i)])
       (syntax-case stx ()
         [(d p) (if (string? (syntax->datum #'d))
-                   (if (exact-nonnegative-integer? (syntax->datum #'p))
-                       (if (string=? (syntax->datum #'d) tdescr)
-                           (if (<= (syntax->datum #'p) tmaxp)
-                               #t
-                               (raise-syntax-error 'exercise-entry "too many points on exercise" #'p))
-                           (raise-syntax-error 'exercise-entry "description doesn't match template" #'d))
-                       (raise-syntax-error 'exercise-entry "points not nonnegative integer" #'p))
+                   (if (exact-integer? (syntax->datum #'p))
+                       (if (exact-nonnegative-integer? (syntax->datum #'p))
+                           (if (string=? (syntax->datum #'d) tdescr)
+                               (if (<= (syntax->datum #'p) tmaxp)
+                                   #t
+                                   (raise-syntax-error 'exercise-entry "too many points on exercise" #'p))
+                               (raise-syntax-error 'exercise-entry "description doesn't match template" #'d))
+                           (raise-syntax-error 'exercise-entry "points not >= 0" #'p))
+                       (raise-syntax-error 'exercise-entry "points not integer" #'p))
                    (raise-syntax-error 'exercise-entry "description not string" #'d))]))))
 
 (define-for-syntax (grading-finished-entry? stx)
