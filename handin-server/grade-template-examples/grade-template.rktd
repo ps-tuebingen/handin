@@ -1,4 +1,4 @@
-#lang s-exp utue-info1-lang-def/grade-template-lang
+#lang s-exp handin-server/grade-template
 
 ([grading-finished #false]
  ["Aufgabe 1 (30 pt): Das Spiel kann ausgeführt werden und die im ersten Absatz beschriebene Funktionalität ist weitestgehend umgesetzt."
