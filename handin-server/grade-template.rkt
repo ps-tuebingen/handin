@@ -15,7 +15,7 @@
       (raise-syntax-error source errstr synob)))
 
 ; Syntax helper for checking exercise entry
-(define-for-syntax (check-exercise descr maxp)
+(define-for-syntax (check-exercise descr maxp [unfinished-grading #f])
   (lambda (stx i)
     (let ([tdescr (list-ref descr i)]
           [tmaxp (list-ref maxp i)])
@@ -23,17 +23,19 @@
         [(d p)
          (and
           (check-synobj-satisfies string? #'d 'exercise-entry "description not string")
-          (check-synobj-satisfies exact-integer? #'p 'exercise-entry "points not integer")
-          (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "points not >= 0")
           (check-synobj-satisfies (λ (descr-tested) (string=? descr-tested tdescr))
                                   #'d
                                   'exercise-entry
                                   "description doesn't match template")
-
-          (check-synobj-satisfies (λ (points) (<= points tmaxp))
-                                  #'p
-                                  'exercise-entry
-                                  "too many points on exercise"))]))))
+          (or
+           unfinished-grading
+           (and
+           (check-synobj-satisfies exact-integer? #'p 'exercise-entry "points not integer")
+           (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "points not >= 0")
+           (check-synobj-satisfies (λ (points) (<= points tmaxp))
+                                   #'p
+                                   'exercise-entry
+                                   "too many points on exercise"))))]))))
 
 (define-for-syntax (grading-finished-entry? stx)
   (syntax-case stx ()
