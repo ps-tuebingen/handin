@@ -8,6 +8,7 @@
 (provide #%app)
 (provide #%datum)
 (provide #%top-interaction) ; Allow running REPL from `grade-template.rktd`
+(provide grading-finished)
 
 (define-for-syntax (check-synobj-satisfies pred synob source errstr)
   (if (pred (syntax->datum synob))
@@ -53,6 +54,15 @@
   (syntax-case stx ()
     [(d a p) (syntax->datum #'p)]))
 
+(define-syntax (grading-finished stx)
+  (syntax-case stx ()
+    [(_ bool)
+     (and
+      (check-synobj-satisfies boolean? #'bool 'grading-finished-entry "not a boolean")
+      #'void)]
+    [(_ . args) (raise-syntax-error 'grading-finished-entry "too many arguments" #'args (cdr (syntax->list #'args)))]
+    [_ (raise-syntax-error 'grading-finished-entry "incorrect grading-finished entry" stx)]))
+
 ; Macro generating macro checking language
 ; ----------------------------------------
 
@@ -78,10 +88,4 @@
                                                      ; What should the source location be?
                                                      (raise-syntax-error 'top-level "wrong number of exercise entries"))
                                                  ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
-                                                 (raise-syntax-error 'top-level  "first item not a valid 'grading finished' entry" #'g-f))]))
-
-              (define-syntax (grading-finished stx)
-                (syntax-case stx ()
-                  [(_ bool) (if (boolean? (syntax->datum #'bool))
-                                #'void
-                                (raise-syntax-error 'grading-finished-entry "not a boolean"))]))))]))
+                                                 (raise-syntax-error 'top-level  "first item not a valid 'grading finished' entry" #'g-f))]))))]))
