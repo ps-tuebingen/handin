@@ -91,27 +91,27 @@
      (let* ([stxlist (syntax->list #'(texrcs ...))]
             [descr (map description stxlist)]
             [maxp (map maxpoints stxlist)])
-           #`(#%module-begin
-              (provide (rename-out [gf-module-begin #%module-begin]))
-              (provide grading-finished)
-              (provide #%datum)
-              (provide #%app)
-              (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
+       #`(#%module-begin
+          (provide (rename-out [gf-module-begin #%module-begin]))
+          (provide grading-finished)
+          (provide #%datum)
+          (provide #%app)
+          (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
 
-              (define-syntax (gf-module-begin stx)
-                (syntax-case stx ()
-                  [(_ (g-f exrcs (... ...)))
-                   (and
-                    (check-satisfies grading-finished-entry?
-                                     #'g-f
-                                     ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
-                                     'top-level
-                                     "first item not a valid 'grading finished' entry")
-                    (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
-                        (when (andmap
-                               (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
-                               (syntax->list #'(exrcs (... ...)))
-                               (range #,(length maxp)))
-                          #'(#%module-begin (g-f #t)))
-                        ; What should the source location be?
-                        (raise-syntax-error 'top-level "wrong number of exercise entries")))]))))]))
+          (define-syntax (gf-module-begin stx)
+            (syntax-case stx ()
+              [(_ (g-f exrcs (... ...)))
+               (and
+                (check-satisfies grading-finished-entry?
+                                 #'g-f
+                                 ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
+                                 'top-level
+                                 "first item not a valid 'grading finished' entry")
+                (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
+                    (when (andmap
+                           (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
+                           (syntax->list #'(exrcs (... ...)))
+                           (range #,(length maxp)))
+                      #'(#%module-begin (g-f #t)))
+                    ; What should the source location be?
+                    (raise-syntax-error 'top-level "wrong number of exercise entries")))]))))]))
