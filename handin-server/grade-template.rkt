@@ -108,7 +108,8 @@
           (provide #%app)
           (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
 
-          ; Don't throw out grading-finished entry, but check it.
+          ; Don't throw out grading-finished entry, but output it, so that
+          ; calling `grading-finished` will check it.
           tg-f
 
           (define-syntax (gf-module-begin stx)
@@ -125,7 +126,10 @@
                            (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
                            (syntax->list #'(exrcs (... ...)))
                            (range #,(length maxp)))
-                      #'(#%module-begin g-f))
+                      #'(#%module-begin
+                         ; Don't throw out grading-finished entry, but output
+                         ; it, so that calling `grading-finished` will check it.
+                         g-f))
                     ; What should the source location be?
                     (raise-syntax-error 'top-level "wrong number of exercise entries")))]))
 
