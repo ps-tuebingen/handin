@@ -49,9 +49,6 @@
                                     'exercise-entry
                                     "too many points on exercise"))))]))))
 
-(define-for-syntax (grading-finished-entry? stx)
-  (symbol=? (first (syntax->datum stx)) 'grading-finished))
-
 ; Check if the passed grading-finished entry marks the file as complete.
 (define-for-syntax (grading-finished? stx)
   (syntax-case stx ()
@@ -75,19 +72,33 @@
   (syntax-case stx ()
     [(d a p) (syntax->datum #'p)]))
 
+(define-for-syntax (check-grading-finished-key key)
+  (check-synobj-satisfies (λ (key)
+                            (symbol=? key 'grading-finished))
+                          key
+                          'grading-finished-entry
+                          "key of the first entry should be 'grading-finished"))
+
 (define-for-syntax (grading-finished-checker stx #:is-template is-template)
   (syntax-case stx ()
-    [(_ bool)
+    [(key bool)
      (and
+      (check-grading-finished-key #'key)
       (check-synobj-satisfies boolean? #'bool 'grading-finished-entry "not a boolean")
       (or (not is-template)
           (check-synobj-satisfies false? #'bool 'grading-finished-entry
-                                  "grading-finished entry must be #false in template"))
+                                  "grading-finished value must be #false in template"))
       #'(void))]
-    [(_ arg arg-excess . args)
-     (raise-syntax-error 'grading-finished-entry "too many arguments" stx #'arg-excess)]
-    [(_) (raise-syntax-error 'grading-finished-entry "boolean missing in grading-finished entry" stx)]
-    [_ (raise-syntax-error 'grading-finished-entry "incorrect grading-finished entry" stx)]))
+    [(key arg arg-excess . args)
+     (and
+      (check-grading-finished-key #'key)
+      (raise-syntax-error 'grading-finished-entry "too many arguments in grading-finished entry" stx #'arg-excess))]
+    [(key)
+     (and
+      (check-grading-finished-key #'key)
+      (raise-syntax-error 'grading-finished-entry "boolean missing in grading-finished entry" stx))]
+    [_
+     (raise-syntax-error 'grading-finished-entry "incorrect grading-finished entry" stx)]))
 
 ; Macro generating macro checking language
 ; ----------------------------------------
@@ -115,11 +126,6 @@
               (syntax-case stx ()
                 [(_ (g-f exrcs (... ...)))
                  (and
-                  (check-satisfies grading-finished-entry?
-                                   #'g-f
-                                   ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
-                                   'top-level
-                                   "first item not a valid 'grading finished' entry")
                   (grading-finished-checker #'g-f #:is-template #false)
                   (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
                       (when (andmap
