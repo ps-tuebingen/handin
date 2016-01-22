@@ -16,10 +16,14 @@
       (raise-syntax-error source errstr synob)))
 
 ; Syntax helper for checking exercise entry
-(define-for-syntax (check-exercise descr maxp [unfinished-grading #f])
+(define-for-syntax (check-exercise descr maxp finished-grading)
   (lambda (stx i)
     (let ([tdescr (list-ref descr i)]
-          [tmaxp (list-ref maxp i)])
+          [tmaxp (list-ref maxp i)]
+          [point-wrong-type-msg
+           (if finished-grading
+               "points not integer"
+               "points not integer or symbol")])
       (syntax-case stx ()
         [(d p)
          (and
@@ -29,17 +33,30 @@
                                   'exercise-entry
                                   "description doesn't match template")
           (or
-           unfinished-grading
+           ; Allow symbols in unfinished grade files (see
+           ; https://github.com/ps-tuebingen/info1-teaching-material/issues/92).
+           (and (not finished-grading) (symbol? (syntax->datum #'p)))
+           ; Even in unfinished grade files, any numeric grades must be
+           ; validated.
            (and
-           (check-synobj-satisfies exact-integer? #'p 'exercise-entry "points not integer")
-           (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "points not >= 0")
-           (check-synobj-satisfies (λ (points) (<= points tmaxp))
-                                   #'p
-                                   'exercise-entry
-                                   "too many points on exercise"))))]))))
+            (check-synobj-satisfies exact-integer? #'p 'exercise-entry point-wrong-type-msg)
+            (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "points not >= 0")
+            (check-synobj-satisfies (λ (points) (<= points tmaxp))
+                                    #'p
+                                    'exercise-entry
+                                    "too many points on exercise"))))]))))
 
 (define-for-syntax (grading-finished-entry? stx)
   (symbol=? (first (syntax->datum stx)) 'grading-finished))
+
+; Check if the passed grading-finished entry marks the file as complete.
+(define-for-syntax (grading-finished? stx)
+  (syntax-case stx (grading-finished)
+    [(grading-finished bool-syn)
+     (let ([bool (syntax->datum #'bool-syn)])
+       (and (boolean? bool)
+            bool))]
+    [_ #false]))
 
 ; List-of Syntax -> List-of String
 ; (syntax of the form (string-literal symbol integer-literal))
@@ -82,7 +99,7 @@
                 (syntax-case stx ()
                   [(_ (g-f exrcs (... ...))) (if (grading-finished-entry? #'g-f)
                                                  (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
-                                                     (when (andmap (check-exercise (list #,@descr) (list #,@maxp)) (syntax->list #'(exrcs (... ...))) (range #,(length maxp)))
+                                                     (when (andmap (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f)) (syntax->list #'(exrcs (... ...))) (range #,(length maxp)))
                                                        #'(#%module-begin (g-f #t)))
                                                      ; What should the source location be?
                                                      (raise-syntax-error 'top-level "wrong number of exercise entries"))
