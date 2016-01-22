@@ -54,11 +54,13 @@
 
 ; Check if the passed grading-finished entry marks the file as complete.
 (define-for-syntax (grading-finished? stx)
-  (syntax-case stx (grading-finished)
-    [(grading-finished bool-syn)
+  (syntax-case stx ()
+    [(id bool-syn)
      (let ([bool (syntax->datum #'bool-syn)])
-       (and (boolean? bool)
-            bool))]
+       (and
+        (symbol=? (syntax->datum #'id) 'grading-finished)
+        (boolean? bool)
+        bool))]
     [_ #false]))
 
 ; List-of Syntax -> List-of String
