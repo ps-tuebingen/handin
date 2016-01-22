@@ -97,11 +97,12 @@
 
               (define-syntax (gf-module-begin stx)
                 (syntax-case stx ()
-                  [(_ (g-f exrcs (... ...))) (if (grading-finished-entry? #'g-f)
-                                                 (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
-                                                     (when (andmap (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f)) (syntax->list #'(exrcs (... ...))) (range #,(length maxp)))
-                                                       #'(#%module-begin (g-f #t)))
-                                                     ; What should the source location be?
-                                                     (raise-syntax-error 'top-level "wrong number of exercise entries"))
-                                                 ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
-                                                 (raise-syntax-error 'top-level  "first item not a valid 'grading finished' entry" #'g-f))]))))]))
+                  [(_ (g-f exrcs (... ...)))
+                   (if (grading-finished-entry? #'g-f)
+                       (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
+                           (when (andmap (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f)) (syntax->list #'(exrcs (... ...))) (range #,(length maxp)))
+                             #'(#%module-begin (g-f #t)))
+                           ; What should the source location be?
+                           (raise-syntax-error 'top-level "wrong number of exercise entries"))
+                       ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
+                       (raise-syntax-error 'top-level  "first item not a valid 'grading finished' entry" #'g-f))]))))]))
