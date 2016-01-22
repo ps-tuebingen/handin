@@ -3,11 +3,12 @@
 (require (for-syntax racket))
 (require (for-syntax racket/base))
 
-(provide (rename-out [gf-def-module-begin #%module-begin]))
-
-(provide #%app)
-(provide #%datum)
-(provide #%top-interaction) ; Allow running REPL from `grade-template.rktd`
+; Define language for grade-template.rktd files as a variant of racket/base
+; with a special #%module-begin, so that running correct files will not
+; produce strange warnings or behaviors.
+(provide
+ (except-out (all-from-out racket/base) #%module-begin)
+ (rename-out [gf-def-module-begin #%module-begin]))
 
 (define-for-syntax (check-satisfies pred synob source errstr)
   (if (pred synob)
@@ -100,11 +101,15 @@
        (begin
          (grading-finished-checker #'tg-f #:is-template #true)
 
+         ; Define language for grade.rktd files as a variant of racket/base
+         ; with a special #%module-begin, so that running correct files will not
+         ; produce strange warnings or behaviors.
          #`(#%module-begin
-            (provide (rename-out [gf-module-begin #%module-begin]))
-            (provide #%datum)
-            (provide #%app)
-            (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
+
+            (require racket/base) ; Needed for the reexport.
+            (provide
+             (except-out (all-from-out racket/base) #%module-begin)
+             (rename-out [gf-module-begin #%module-begin]))
 
             (define-syntax (gf-module-begin stx)
               (syntax-case stx ()
