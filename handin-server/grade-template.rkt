@@ -75,16 +75,22 @@
   (syntax-case stx ()
     [(d a p) (syntax->datum #'p)]))
 
-(define-syntax (grading-finished stx)
+(define-for-syntax (grading-finished-checker stx is-template)
   (syntax-case stx ()
     [(_ bool)
      (and
       (check-synobj-satisfies boolean? #'bool 'grading-finished-entry "not a boolean")
+      (or (not is-template)
+          (check-synobj-satisfies false? #'bool 'grading-finished-entry
+                                  "grading-finished entry must be #false in template"))
       #'(void))]
     [(_ arg arg-excess . args)
      (raise-syntax-error 'grading-finished-entry "too many arguments" stx #'arg-excess)]
     [(_) (raise-syntax-error 'grading-finished-entry "boolean missing in grading-finished entry" stx)]
     [_ (raise-syntax-error 'grading-finished-entry "incorrect grading-finished entry" stx)]))
+
+(define-syntax (grading-finished stx)
+  (grading-finished-checker stx #true))
 
 ; Macro generating macro checking language
 ; ----------------------------------------
@@ -121,4 +127,7 @@
                            (range #,(length maxp)))
                       #'(#%module-begin g-f))
                     ; What should the source location be?
-                    (raise-syntax-error 'top-level "wrong number of exercise entries")))]))))]))
+                    (raise-syntax-error 'top-level "wrong number of exercise entries")))]))
+
+          (define-syntax (grading-finished stx)
+            (grading-finished-checker stx #false))))]))
