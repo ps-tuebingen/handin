@@ -74,7 +74,7 @@
   (syntax-case stx ()
     [(d a p) (syntax->datum #'p)]))
 
-(define-for-syntax (grading-finished-checker stx is-template)
+(define-for-syntax (grading-finished-checker stx #:is-template is-template)
   (syntax-case stx ()
     [(_ bool)
      (and
@@ -98,7 +98,7 @@
             [descr (map description stxlist)]
             [maxp (map maxpoints stxlist)])
        (begin
-         (grading-finished-checker #'tg-f #true)
+         (grading-finished-checker #'tg-f #:is-template #true)
 
          #`(#%module-begin
             (provide (rename-out [gf-module-begin #%module-begin]))
@@ -115,7 +115,7 @@
                                    ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
                                    'top-level
                                    "first item not a valid 'grading finished' entry")
-                  (grading-finished-checker #'g-f #false)
+                  (grading-finished-checker #'g-f #:is-template #false)
                   (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
                       (when (andmap
                              (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
