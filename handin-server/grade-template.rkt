@@ -10,10 +10,13 @@
 (provide #%top-interaction) ; Allow running REPL from `grade-template.rktd`
 (provide grading-finished)
 
-(define-for-syntax (check-synobj-satisfies pred synob source errstr)
-  (if (pred (syntax->datum synob))
+(define-for-syntax (check-satisfies pred synob source errstr)
+  (if (pred synob)
       #true
       (raise-syntax-error source errstr synob)))
+
+(define-for-syntax (check-synobj-satisfies pred synob source errstr)
+  (check-satisfies (λ (synob) (pred (syntax->datum synob))) synob source errstr))
 
 ; Syntax helper for checking exercise entry
 (define-for-syntax (check-exercise descr maxp finished-grading)
@@ -98,11 +101,17 @@
               (define-syntax (gf-module-begin stx)
                 (syntax-case stx ()
                   [(_ (g-f exrcs (... ...)))
-                   (if (grading-finished-entry? #'g-f)
-                       (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
-                           (when (andmap (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f)) (syntax->list #'(exrcs (... ...))) (range #,(length maxp)))
-                             #'(#%module-begin (g-f #t)))
-                           ; What should the source location be?
-                           (raise-syntax-error 'top-level "wrong number of exercise entries"))
-                       ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
-                       (raise-syntax-error 'top-level  "first item not a valid 'grading finished' entry" #'g-f))]))))]))
+                   (and
+                    (check-satisfies grading-finished-entry?
+                                     #'g-f
+                                     ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
+                                     'top-level
+                                     "first item not a valid 'grading finished' entry")
+                    (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
+                        (when (andmap
+                               (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
+                               (syntax->list #'(exrcs (... ...)))
+                               (range #,(length maxp)))
+                          #'(#%module-begin (g-f #t)))
+                        ; What should the source location be?
+                        (raise-syntax-error 'top-level "wrong number of exercise entries")))]))))]))
