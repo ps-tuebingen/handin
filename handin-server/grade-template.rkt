@@ -79,7 +79,9 @@
      (and
       (check-synobj-satisfies boolean? #'bool 'grading-finished-entry "not a boolean")
       #'void)]
-    [(_ . args) (raise-syntax-error 'grading-finished-entry "too many arguments" #'args (cdr (syntax->list #'args)))]
+    [(_ arg arg-excess . args)
+     (raise-syntax-error 'grading-finished-entry "too many arguments" stx #'arg-excess)]
+    [(_) (raise-syntax-error 'grading-finished-entry "boolean missing in grading-finished entry" stx)]
     [_ (raise-syntax-error 'grading-finished-entry "incorrect grading-finished entry" stx)]))
 
 ; Macro generating macro checking language
