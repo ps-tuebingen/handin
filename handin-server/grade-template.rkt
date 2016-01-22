@@ -8,7 +8,6 @@
 (provide #%app)
 (provide #%datum)
 (provide #%top-interaction) ; Allow running REPL from `grade-template.rktd`
-(provide grading-finished)
 
 (define-for-syntax (check-satisfies pred synob source errstr)
   (if (pred synob)
@@ -89,9 +88,6 @@
     [(_) (raise-syntax-error 'grading-finished-entry "boolean missing in grading-finished entry" stx)]
     [_ (raise-syntax-error 'grading-finished-entry "incorrect grading-finished entry" stx)]))
 
-(define-syntax (grading-finished stx)
-  (grading-finished-checker stx #true))
-
 ; Macro generating macro checking language
 ; ----------------------------------------
 
@@ -101,37 +97,30 @@
      (let* ([stxlist (syntax->list #'(texrcs ...))]
             [descr (map description stxlist)]
             [maxp (map maxpoints stxlist)])
-       #`(#%module-begin
-          (provide (rename-out [gf-module-begin #%module-begin]))
-          (provide grading-finished)
-          (provide #%datum)
-          (provide #%app)
-          (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
+       (begin
+         (grading-finished-checker #'tg-f #true)
 
-          ; Don't throw out grading-finished entry, but output it, so that
-          ; calling `grading-finished` will check it.
-          tg-f
+         #`(#%module-begin
+            (provide (rename-out [gf-module-begin #%module-begin]))
+            (provide #%datum)
+            (provide #%app)
+            (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
 
-          (define-syntax (gf-module-begin stx)
-            (syntax-case stx ()
-              [(_ (g-f exrcs (... ...)))
-               (and
-                (check-satisfies grading-finished-entry?
-                                 #'g-f
-                                 ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
-                                 'top-level
-                                 "first item not a valid 'grading finished' entry")
-                (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
-                    (when (andmap
-                           (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
-                           (syntax->list #'(exrcs (... ...)))
-                           (range #,(length maxp)))
-                      #'(#%module-begin
-                         ; Don't throw out grading-finished entry, but output
-                         ; it, so that calling `grading-finished` will check it.
-                         g-f))
-                    ; What should the source location be?
-                    (raise-syntax-error 'top-level "wrong number of exercise entries")))]))
-
-          (define-syntax (grading-finished stx)
-            (grading-finished-checker stx #false))))]))
+            (define-syntax (gf-module-begin stx)
+              (syntax-case stx ()
+                [(_ (g-f exrcs (... ...)))
+                 (and
+                  (check-satisfies grading-finished-entry?
+                                   #'g-f
+                                   ; XXX We have a syntax error, but that's imprecise. Where's exactly the problem?
+                                   'top-level
+                                   "first item not a valid 'grading finished' entry")
+                  (grading-finished-checker #'g-f #false)
+                  (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
+                      (when (andmap
+                             (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
+                             (syntax->list #'(exrcs (... ...)))
+                             (range #,(length maxp)))
+                        #'(#%module-begin))
+                      ; What should the source location be?
+                      (raise-syntax-error 'top-level "wrong number of exercise entries")))])))))]))
