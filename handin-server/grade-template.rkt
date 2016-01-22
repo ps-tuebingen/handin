@@ -39,8 +39,7 @@
                                    "too many points on exercise"))))]))))
 
 (define-for-syntax (grading-finished-entry? stx)
-  (syntax-case stx ()
-    [(id _) (symbol=? (syntax->datum #'id) 'grading-finished)]))
+  (symbol=? (first (syntax->datum stx)) 'grading-finished))
 
 ; List-of Syntax -> List-of String
 ; (syntax of the form (string-literal symbol integer-literal))
