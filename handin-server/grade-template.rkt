@@ -100,6 +100,9 @@
           (provide #%app)
           (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
 
+          ; Don't throw out grading-finished entry, but check it.
+          (tg-f)
+
           (define-syntax (gf-module-begin stx)
             (syntax-case stx ()
               [(_ (g-f exrcs (... ...)))
