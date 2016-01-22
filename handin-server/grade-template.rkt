@@ -78,7 +78,7 @@
     [(_ bool)
      (and
       (check-synobj-satisfies boolean? #'bool 'grading-finished-entry "not a boolean")
-      #'void)]
+      #'(void))]
     [(_ arg arg-excess . args)
      (raise-syntax-error 'grading-finished-entry "too many arguments" stx #'arg-excess)]
     [(_) (raise-syntax-error 'grading-finished-entry "boolean missing in grading-finished entry" stx)]
@@ -101,7 +101,7 @@
           (provide #%top-interaction) ; Allow running REPL from users of `grade-template.rktd`, that is, `grade.rktd` files.
 
           ; Don't throw out grading-finished entry, but check it.
-          (tg-f)
+          tg-f
 
           (define-syntax (gf-module-begin stx)
             (syntax-case stx ()
@@ -117,6 +117,6 @@
                            (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
                            (syntax->list #'(exrcs (... ...)))
                            (range #,(length maxp)))
-                      #'(#%module-begin (g-f #t)))
+                      #'(#%module-begin g-f))
                     ; What should the source location be?
                     (raise-syntax-error 'top-level "wrong number of exercise entries")))]))))]))
