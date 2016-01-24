@@ -3,19 +3,16 @@ for automated handin and checking of programs from within DrRacket.
 Instructors use this infrastructure to generate a separate,
 course-specific ".plt" file (or package) that students install.
 
-Install the official version of the "handin" package with
+To install this fork of the `handin` package, use URL
+`git://github.com/ps-tuebingen/handin.git`, either through the "Install
+Package..." menu item in DrRacket's "File" menu, or via
 
-    raco pkg install handin
+    raco pkg install git://github.com/ps-tuebingen/handin.git
 
-or through the "Install Package..." menu item in DrRacket's "File"
-menu.
+## Running the Handin Server
 
-To install this fork, run instead:
-
-    raco pkg install https://github.com/ps-tuebingen/handin.git
-
-After installing, see the "Handin Server" documentation that is added
-to the Racket documentation.
+For instructions, after installing, see the "Handin Server" documentation that
+is added to the Racket documentation.
 
 ## Branching
 
@@ -33,3 +30,9 @@ forwarded, so that `deploy-production` is always a non-strict subset of
 Please read through `merge-staging.sh` and `merge-production.sh`; they are
 simple scripts to automate repetitive steps, not complex programs which handle
 well unexpected conditions.
+
+## Installing the official version
+
+Install the official version of the "handin" package with
+
+    raco pkg install handin
