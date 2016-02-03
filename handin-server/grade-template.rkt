@@ -79,6 +79,12 @@
                           'grading-finished-entry
                           "key of the first entry should be 'grading-finished"))
 
+(define-for-syntax EXPECTED-TOTAL-SCORE 100)
+(define-for-syntax (validate-total-points maxp)
+  (when (not (= (apply + maxp) 100))
+    ; What should the source location be?
+    (raise-syntax-error 'top-level (~a "total score is not " EXPECTED-TOTAL-SCORE))))
+
 (define-for-syntax (grading-finished-checker stx #:is-template is-template)
   (syntax-case stx ()
     [(key bool)
@@ -102,7 +108,6 @@
 
 ; Macro generating macro checking language
 ; ----------------------------------------
-
 (define-syntax (gf-def-module-begin stx)
   (syntax-case stx ()
     [(_ (tg-f texrcs ...))
@@ -111,6 +116,7 @@
             [maxp (map maxpoints stxlist)])
        (begin
          (grading-finished-checker #'tg-f #:is-template #true)
+         (validate-total-points maxp)
 
          ; Define language for grade.rktd files as a variant of racket/base
          ; with a special #%module-begin, so that running correct files will not
