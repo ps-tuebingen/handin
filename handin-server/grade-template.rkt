@@ -36,8 +36,8 @@
           [current-max-score (list-ref max-scores i)]
           [point-wrong-type-msg
            (if finished-grading
-               "points not integer"
-               "points not integer or symbol")])
+               "score not integer"
+               "score not integer or symbol")])
       (syntax-case stx ()
         [(d p)
          (and
@@ -54,11 +54,11 @@
            ; validated.
            (and
             (check-synobj-satisfies exact-integer? #'p 'exercise-entry point-wrong-type-msg)
-            (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "points not >= 0")
+            (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "score not >= 0")
             (check-synobj-satisfies (λ (score) (<= score current-max-score))
                                     #'p
                                     'exercise-entry
-                                    "too many points on exercise"))))]))))
+                                    "overly high score on exercise"))))]))))
 
 ; Check if the passed grading-finished entry marks the file as complete.
 (define-for-syntax (grading-finished? stx)
