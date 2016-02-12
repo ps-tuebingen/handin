@@ -100,6 +100,19 @@
     [_
      (raise-syntax-error 'grading-finished-entry "incorrect grading-finished entry" stx)]))
 
+(define-for-syntax ((module-checker descr maxp) stx)
+  (syntax-case stx ()
+    [(_ (g-f exrcs ...))
+     (and
+      (grading-finished-checker #'g-f #:is-template #false)
+      (if (= (length (syntax->datum #'(exrcs ...))) (length maxp))
+          (when (andmap
+                 (check-exercise descr maxp (grading-finished? #'g-f))
+                 (syntax->list #'(exrcs ...))
+                 (range (length maxp)))
+            #'(#%module-begin))
+          ; What should the source location be?
+          (raise-syntax-error 'top-level "wrong number of exercise entries")))]))
 ; Macro generating macro checking language
 ; ----------------------------------------
 
@@ -122,16 +135,5 @@
              (except-out (all-from-out racket/base) #%module-begin)
              (rename-out [gf-module-begin #%module-begin]))
 
-            (define-syntax (gf-module-begin stx)
-              (syntax-case stx ()
-                [(_ (g-f exrcs (... ...)))
-                 (and
-                  (grading-finished-checker #'g-f #:is-template #false)
-                  (if (= (length (syntax->datum #'(exrcs (... ...)))) #,(length maxp))
-                      (when (andmap
-                             (check-exercise (list #,@descr) (list #,@maxp) (grading-finished? #'g-f))
-                             (syntax->list #'(exrcs (... ...)))
-                             (range #,(length maxp)))
-                        #'(#%module-begin))
-                      ; What should the source location be?
-                      (raise-syntax-error 'top-level "wrong number of exercise entries")))])))))]))
+            (define-syntax gf-module-begin
+              (module-checker (list #,@descr) (list #,@maxp))))))]))
