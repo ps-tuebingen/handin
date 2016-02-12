@@ -10,15 +10,26 @@
  (except-out (all-from-out racket/base) #%module-begin)
  (rename-out [gf-def-module-begin #%module-begin]))
 
+; (SyntaxObject -> Boolean) SyntaxObject (U Symbol #f) String -> Boolean
+;
+; Check that syntax object synob satisfies predicate pred, otherwise raise an
+; error.
 (define-for-syntax (check-satisfies pred synob source errstr)
   (if (pred synob)
       #true
       (raise-syntax-error source errstr synob)))
 
+
+; (Datum -> Boolean) SyntaxObject (U Symbol #f) String -> Boolean
+;
+; Check that syntax object synob, after being converted through `syntax->datum`,
+; satisfies predicate pred, otherwise raise an error.
 (define-for-syntax (check-synobj-satisfies pred synob source errstr)
   (check-satisfies (λ (synob) (pred (syntax->datum synob))) synob source errstr))
 
-; Syntax helper for checking exercise entry
+; (List-Of String) (List-Of Number) Boolean -> (SyntaxObject Number -> Boolean)
+; Validate a grading entry in a student file (described by stx) according to the
+; i-th entry of the grading template (as described in lists descr and maxp).
 (define-for-syntax (check-exercise descr maxp finished-grading)
   (lambda (stx i)
     (let ([tdescr (list-ref descr i)]
@@ -119,8 +130,9 @@
             #'(#%module-begin))
           ; What should the source location be?
           (raise-syntax-error 'top-level "wrong number of exercise entries")))]))
-; Macro generating macro checking language
-; ----------------------------------------
+
+; Validate the grade-template, and macro-expand it into the appropriate language
+; definition.
 (define-syntax (gf-def-module-begin stx)
   (syntax-case stx ()
     [(_ (tg-f texrcs ...))
