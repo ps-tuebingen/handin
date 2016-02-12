@@ -29,11 +29,11 @@
 
 ; (List-Of String) (List-Of Number) Boolean -> (SyntaxObject Number -> Boolean)
 ; Validate a grading entry in a student file (described by stx) according to the
-; i-th entry of the grading template (as described in lists descr and maxp).
-(define-for-syntax (check-exercise descr maxp finished-grading)
+; i-th entry of the grading template (as described in lists descriptions and max-scores).
+(define-for-syntax (check-exercise descriptions max-scores finished-grading)
   (lambda (stx i)
-    (let ([tdescr (list-ref descr i)]
-          [tmaxp (list-ref maxp i)]
+    (let ([current-description (list-ref descriptions i)]
+          [current-max-score (list-ref max-scores i)]
           [point-wrong-type-msg
            (if finished-grading
                "points not integer"
@@ -42,7 +42,7 @@
         [(d p)
          (and
           (check-synobj-satisfies string? #'d 'exercise-entry "description not string")
-          (check-synobj-satisfies (λ (descr-tested) (string=? descr-tested tdescr))
+          (check-synobj-satisfies (λ (descr-tested) (string=? descr-tested current-description))
                                   #'d
                                   'exercise-entry
                                   "description doesn't match template")
@@ -55,7 +55,7 @@
            (and
             (check-synobj-satisfies exact-integer? #'p 'exercise-entry point-wrong-type-msg)
             (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "points not >= 0")
-            (check-synobj-satisfies (λ (points) (<= points tmaxp))
+            (check-synobj-satisfies (λ (score) (<= score current-max-score))
                                     #'p
                                     'exercise-entry
                                     "too many points on exercise"))))]))))
@@ -73,13 +73,13 @@
 
 ; List-of Syntax -> List-of String
 ; (syntax of the form (string-literal symbol integer-literal))
-(define-for-syntax (description stx)
+(define-for-syntax (get-description stx)
   (syntax-case stx ()
     [(d a p) (syntax->datum #'d)]))
 
 ; List-of Syntax -> List-of Integer
 ; (syntax of the form (string-literal symbol integer-literal))
-(define-for-syntax (maxpoints stx)
+(define-for-syntax (get-max-score stx)
   (syntax-case stx ()
     [(d a p) (syntax->datum #'p)]))
 
@@ -91,8 +91,8 @@
                           "key of the first entry should be 'grading-finished"))
 
 (define-for-syntax EXPECTED-TOTAL-SCORE 100)
-(define-for-syntax (validate-total-points maxp)
-  (when (not (= (apply + maxp) 100))
+(define-for-syntax (validate-total-scores max-scores)
+  (when (not (= (apply + max-scores) 100))
     ; What should the source location be?
     (raise-syntax-error 'top-level (~a "total score is not " EXPECTED-TOTAL-SCORE))))
 
@@ -117,16 +117,16 @@
     [_
      (raise-syntax-error 'grading-finished-entry "incorrect grading-finished entry" stx)]))
 
-(define-for-syntax ((module-checker descr maxp) stx)
+(define-for-syntax ((module-checker descriptions max-scores) stx)
   (syntax-case stx ()
     [(_ (g-f exrcs ...))
      (and
       (grading-finished-checker #'g-f #:is-template #false)
-      (if (= (length (syntax->datum #'(exrcs ...))) (length maxp))
+      (if (= (length (syntax->datum #'(exrcs ...))) (length max-scores))
           (when (andmap
-                 (check-exercise descr maxp (grading-finished? #'g-f))
+                 (check-exercise descriptions max-scores (grading-finished? #'g-f))
                  (syntax->list #'(exrcs ...))
-                 (range (length maxp)))
+                 (range (length max-scores)))
             #'(#%module-begin))
           ; What should the source location be?
           (raise-syntax-error 'top-level "wrong number of exercise entries")))]))
@@ -137,11 +137,11 @@
   (syntax-case stx ()
     [(_ (tg-f texrcs ...))
      (let* ([stxlist (syntax->list #'(texrcs ...))]
-            [descr (map description stxlist)]
-            [maxp (map maxpoints stxlist)])
+            [descriptions (map get-description stxlist)]
+            [max-scores (map get-max-score stxlist)])
        (begin
          (grading-finished-checker #'tg-f #:is-template #true)
-         (validate-total-points maxp)
+         (validate-total-scores max-scores)
 
          ; Define language for grade.rktd files as a variant of racket/base
          ; with a special #%module-begin, so that running correct files will not
@@ -154,4 +154,4 @@
              (rename-out [gf-module-begin #%module-begin]))
 
             (define-syntax gf-module-begin
-              (module-checker (list #,@descr) (list #,@maxp))))))]))
+              (module-checker (list #,@descriptions) (list #,@max-scores))))))]))
