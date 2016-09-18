@@ -740,6 +740,13 @@
 (define-syntax-rule (!image id)
   (begin (!defined id) (!image* id)))
 
+(provide !boolean* !boolean)
+(define-syntax-rule (!boolean* expr)
+  (unless (boolean? ((submission-eval) `expr))
+    (error* "~.s is expected to be bound to a boolean" (->disp 'expr))))
+(define-syntax-rule (!boolean id)
+  (begin (!defined id) (!boolean* id)))
+
 (provide !eval)
 (define-syntax-rule (!eval expr) ((submission-eval) `expr))
 
