@@ -2,7 +2,7 @@
 
 (require racket/class racket/unit racket/file racket/gui/base net/sendurl
          mrlib/switchable-button mrlib/bitmap-label drracket/tool framework
-         drracket/private/auto-language
+         drracket/private/insulated-read-language
          "info.rkt" "client.rkt" "this-collection.rkt" "utils.rkt")
 
 (provide tool@)
