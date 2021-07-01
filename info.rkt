@@ -10,8 +10,8 @@
                "htdp-lib"
                "net-lib"
                "pconvert-lib"
+               ["sandbox-lib" #:version "1.2"]
                "rackunit-lib"
-               "sandbox-lib"
                "srfi-lib"
                "web-server-lib"))
 (define build-deps '("gui-doc"

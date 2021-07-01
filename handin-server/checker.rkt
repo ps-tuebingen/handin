@@ -368,6 +368,7 @@
             [language*      (get ':language      #'#f)]
             [requires*      (get ':requires      #''())]
             [teachpacks*    (get ':teachpacks    #''())]
+            [allowed-requires* (get ':allowed-requires #'#f)]
             [create-text?*  (get ':create-text?  #'#t)]
             [untabify?*     (get ':untabify?     #'#t)]
             [textualize?*   (get ':textualize?   #'#f)]
@@ -413,6 +414,7 @@
                      [eval?          eval?*]
                      [language       language*]
                      [requires       requires*]
+                     [allowed-requires allowed-requires*]
                      [teachpacks     teachpacks*]
                      [create-text?   create-text?*]
                      [untabify?      untabify?*]
@@ -514,6 +516,7 @@
                                     (parameterize ([sandbox-run-submodules '(test)])
                                       (call-with-evaluator/submission
                                        language (append requires teachpacks)
+                                       #:allowed-requires allowed-requires
                                        submission values)))])
                         (set-run-status "running tests")
                         (parameterize ([submission-eval (wrap-evaluator eval)])
