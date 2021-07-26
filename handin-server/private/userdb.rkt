@@ -62,11 +62,9 @@
          [method (if post-data "POST" "GET")]
          [full-path (format "~a?~a"
                             path
-                            (alist->form-urlencoded @get-params))]
-         [headers (insert-field "api_key" api-key (insert-field "api_username" api-username empty-header))])
-                            ;(alist->form-urlencoded `((api_key . ,api-key)
-                                                      ;(api_username . ,api-username)
-                                                      ;,@get-params)))])
+                            (alist->form-urlencoded `((api_key . ,api-key)
+                                                      (api_username . ,api-username)
+                                                      ,@get-params)))])
     (and api-username api-key
       (let-values ([(status header port)
                     (http-sendrecv api-endpoint-hostname
@@ -74,7 +72,6 @@
                                    #:ssl? #t
                                    #:version "1.1"
                                    #:method method
-                                   #:headers headers
                                    #:data post-data)])
         (if DEBUG
             ; Careful: This logs sensitive data.
