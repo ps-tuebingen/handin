@@ -64,7 +64,9 @@
          [full-path (format "~a?~a"
                             path
                             (alist->form-urlencoded `(,@get-params)))]
-         [headers `( ,(insert-field "Api-Key" api-key empty-header) ,(insert-field "Api-Username" api-username empty-header))])
+         ; for some reason, the auth.json endpoint does not like headers created via "insert-field"
+         ;[headers `( ,(insert-field "Api-Key" api-key empty-header) ,(insert-field "Api-Username" api-username empty-header))])
+         [headers `( ,(string-append "Api-Key: " api-key) ,(string-append "Api-Username: " api-username))])
                             ;(alist->form-urlencoded `((api_key . ,api-key)
                                                       ;(api_username . ,api-username)
                                                       ;,@get-params)))])
