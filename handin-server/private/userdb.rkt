@@ -54,7 +54,7 @@
       (let ([config (discourse-config)])
         (and config (hash-ref config key))))))
 
-(define DEBUG #f)
+(define DEBUG #t)
 ;; send request to discourse
 (define (discourse-req path #:post-data [post-data #f] #:get-params [get-params '()])
   (let* ([api-username (get-conf/discourse 'api_username)]
