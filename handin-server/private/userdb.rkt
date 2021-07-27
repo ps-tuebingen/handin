@@ -64,7 +64,7 @@
          [full-path (format "~a?~a"
                             path
                             (alist->form-urlencoded `(,@get-params)))]
-         [headers `( ,(insert-field "api_key" api-key empty-header) ,(insert-field "api_username" api-username empty-header))])
+         [headers `( ,(insert-field "Api-Key" api-key empty-header) ,(insert-field "Api-Username" api-username empty-header))])
                             ;(alist->form-urlencoded `((api_key . ,api-key)
                                                       ;(api_username . ,api-username)
                                                       ;,@get-params)))])
