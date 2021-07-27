@@ -3,6 +3,7 @@
 (require racket/file
          json
          net/http-client
+         net/head
          net/uri-codec
          "logger.rkt"
          "config.rkt")
