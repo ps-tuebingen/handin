@@ -3,6 +3,7 @@
 (require racket/file
          json
          net/http-client
+         net/head
          net/uri-codec
          "logger.rkt"
          "config.rkt")
@@ -62,9 +63,13 @@
          [method (if post-data "POST" "GET")]
          [full-path (format "~a?~a"
                             path
-                            (alist->form-urlencoded `((api_key . ,api-key)
-                                                      (api_username . ,api-username)
-                                                      ,@get-params)))])
+                            (alist->form-urlencoded `(,@get-params)))]
+         ; for some reason, the auth.json endpoint does not like headers created via "insert-field"
+         ;[headers `( ,(insert-field "Api-Key" api-key empty-header) ,(insert-field "Api-Username" api-username empty-header))])
+         [headers `( ,(string-append "Api-Key: " api-key) ,(string-append "Api-Username: " api-username))])
+                            ;(alist->form-urlencoded `((api_key . ,api-key)
+                                                      ;(api_username . ,api-username)
+                                                      ;,@get-params)))])
     (and api-username api-key
       (let-values ([(status header port)
                     (http-sendrecv api-endpoint-hostname
@@ -72,6 +77,7 @@
                                    #:ssl? #t
                                    #:version "1.1"
                                    #:method method
+                                   #:headers headers
                                    #:data post-data)])
         (if DEBUG
             ; Careful: This logs sensitive data.
