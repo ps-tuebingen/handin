@@ -56,7 +56,10 @@
    (lambda ()
      (if (and (list? lang) (= 2 (length lang)) (eq? 'module (car lang)))
          (make-module-evaluator inp #:language (cadr lang) #:allow-read reqs
-                                #:allow-syntactic-requires allowed-requires)
+                                #:allow-syntactic-requires allowed-requires
+                                #:readers '((lib "htdp-beginner-reader.ss" "lang")
+                                            (lib "htdp-beginner-abbr-reader.ss" "lang")
+                                            (lib "htdp-intermediate-lambda-reader.ss" "lang")))
          (make-evaluator lang inp #:requires reqs
                          #:allow-syntactic-requires allowed-requires)))))
 
