@@ -59,7 +59,9 @@
                                 #:allow-syntactic-requires allowed-requires
                                 #:readers '((lib "htdp-beginner-reader.ss" "lang")
                                             (lib "htdp-beginner-abbr-reader.ss" "lang")
-                                            (lib "htdp-intermediate-lambda-reader.ss" "lang")))
+                                            (lib "htdp-intermediate-reader.ss" "lang")
+                                            (lib "htdp-intermediate-lambda-reader.ss" "lang")
+                                            (lib "htdp-advanced-reader.ss" "lang")))
          (make-evaluator lang inp #:requires reqs
                          #:allow-syntactic-requires allowed-requires)))))
 
