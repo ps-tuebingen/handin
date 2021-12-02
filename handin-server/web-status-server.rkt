@@ -332,7 +332,7 @@ Ort:  Raum VB N3, Morgenstelle")
       (make-response/full 200 #"Okay" (current-seconds)
         (cond [html? #"text/html"]
               [wxme? #"application/data"]
-              [else  #"text/plain"])
+              [else  #"text/plain; charset=utf-8"])
         (list
          (make-header #"Content-Length"
                       (string->bytes/latin-1
