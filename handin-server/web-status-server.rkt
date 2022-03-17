@@ -408,7 +408,7 @@ Ort:  Raum VB N3, Morgenstelle")
              (make-page
               "Abgabestatus"
               `(p "Hier können Sie den Status Ihrer abgegebenen Aufgabenblätter einsehen. Melden Sie sich mit den gleichen Daten an, die Sie auch für das "
-                  (a ([href "https://forum-ps.informatik.uni-tuebingen.de/"]) "Forum") " verwenden.")
+                  (a ([href "https://forum-ps.cs.uni-tuebingen.de/"]) "Forum") " verwenden.")
               (if errmsg
                   `(p ([class "error-msg"]) ,errmsg)
                   `(p))

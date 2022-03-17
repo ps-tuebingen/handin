@@ -654,7 +654,7 @@
                         "Aus diesem Grund können wir Ihre Lösung nicht annehmen.\n\n"
                         "Upgraden Sie bitte das Plugin umgehend und starten Sie DrRacket neu. "
                         "Eine Anleitung finden Sie auch im Forum:\n\n"
-                        "  https://forum-ps.informatik.uni-tuebingen.de/plugin-aktualisieren"))]
+                        "  https://forum-ps.cs.uni-tuebingen.de/plugin-aktualisieren"))]
                [else
                 (error 'handin "unknown handin version: ~e" ver)]))
            (handle-connection r r-safe w)
