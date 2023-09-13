@@ -9,6 +9,10 @@ Package..." menu item in DrRacket's "File" menu, or via
 
     raco pkg install git://github.com/ps-tuebingen/handin.git
 
+Alternatively, clone the repo to directory $PATH_TO_HANDIN and run
+
+    raco pkg install -n handin $PATH_TO_HANDIN
+
 ## Running the Handin Server
 
 For instructions, after installing, see the "Handin Server" documentation that
