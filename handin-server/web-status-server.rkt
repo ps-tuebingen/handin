@@ -334,9 +334,9 @@ Ort:  Raum VB N3, Morgenstelle")
               [wxme? #"application/data"]
               [else  #"text/plain; charset=utf-8"])
         (list
-         (make-header #"Content-Length"
-                      (string->bytes/latin-1
-                       (number->string (bytes-length data))))
+         ;(make-header #"Content-Length"
+         ;             (string->bytes/latin-1
+         ;              (number->string (bytes-length data))))
          (make-header #"Content-Disposition"
                       (string->bytes/utf-8
                        (format "~a; filename=~s"
