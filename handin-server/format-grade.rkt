@@ -47,12 +47,12 @@
 
 (define (feedback-entry? entry)
   (and (string? (first entry))
-       (string=? (first (string-split (first entry))) "Feedback")
+       (string-prefix? (first entry) "Feedback")
        (string? (second entry))))
 
 (define (score-entry? entry)
   (and (string? (first entry))
-       (string=? (first (string-split (first entry))) "Bewertung")
+       (string-prefix? (first entry) "Bewertung")
        (number? (second entry))))
 
 (define (bullet-entry? entry)
@@ -104,7 +104,7 @@
                                   [(symbol? rating) (symbol->string rating)]
                                   [(number? rating) (number->string rating)]
                                   [else rating])))
-                         (td ,(if (string=? (first (string-split (first entry))) "Bewertung")
+                         (td ,(if (string-prefix? (first entry) "Bewertung")
                                 `(b ,(first entry))
                                 (first entry)))))))
     `()))
@@ -114,7 +114,7 @@
 (define (grading-table-total entries)
   (for/sum ([entry (in-list entries)]
             #:when (and (string? (first entry))
-                        (string=? (first (string-split (first entry))) "Bewertung")))
+                        (string-prefix? (first entry) "Bewertung")))
     (second entry)))
 
 ;; compute total grade from filename of the .rktd file
