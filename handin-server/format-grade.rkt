@@ -99,14 +99,21 @@
        ,@(for/list
                    ([entry (in-list entries)]
                     #:when (string? (first entry)))
-                    `(tr (td ,(let ([rating (second entry)])
-                                (cond
-                                  [(symbol? rating) (symbol->string rating)]
-                                  [(number? rating) (number->string rating)]
-                                  [else rating])))
-                         (td ,(if (string-prefix? (first entry) "Bewertung")
-                                `(b ,(first entry))
-                                (first entry)))))))
+                    `(tr ,@(let ([descr (first entry)]
+                                 [rating (second entry)])
+                             (cond
+                               [(string-prefix? descr "Feedback")
+                                 (list
+                                  `(td "")
+                                  `(td ,(string-append descr ": " rating)))]
+                               [(string-prefix? descr "Bewertung")
+                                 (list
+                                  `(td ,(number->string rating))
+                                  `(td (b ,(identity descr))))]
+                               [else
+                                 (list
+                                  `(td ,(symbol->string rating))
+                                  `(td ,(identity descr)))]))))))
     `()))
 
 ; FinishedGradingTable -> Grade
