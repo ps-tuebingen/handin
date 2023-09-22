@@ -42,8 +42,8 @@
         [(d p)
          (and
           (check-synobj-satisfies string? #'d 'exercise-entry "description not string")
-          (check-synobj-satisfies (λ (descr-tested) (or (and (string=? (first (string-split current-description)) "Feedback")
-                                                             (string=? (first (string-split descr-tested)) "Feedback"))
+          (check-synobj-satisfies (λ (descr-tested) (or (and (string-prefix? current-description "Feedback")
+                                                             (string-prefix? descr-tested current-description))
                                                         (string=? descr-tested current-description)))
                                   #'d
                                   'exercise-entry
@@ -54,13 +54,16 @@
            (and (not finished-grading) (symbol? (syntax->datum #'p)))
            ; Case for the feedback entries
            (and
-            (string=? (first (string-split (syntax->datum #'d))) "Feedback")
-            (check-synobj-satisfies (λ (feed) (and (string? feed) (string=? feed ""))) #'p 'exercise-entry "this should be an empty string: write your feedback after the colon in the line above"))
+            (string-prefix? (syntax->datum #'d) "Feedback")
+            (check-synobj-satisfies (λ (feed) (and (string? feed) (string=? feed "")))
+                                    #'p
+                                    'exercise-entry
+                                    "this should be an empty string: write your feedback after the colon in the line above"))
            ; Case for the score entries
            ; Even in unfinished grade files, any numeric grades must be
            ; validated.
            (and
-            (string=? (first (string-split (syntax->datum #'d))) "Bewertung")
+            (string-prefix? (syntax->datum #'d) "Bewertung")
             (check-synobj-satisfies exact-integer? #'p 'exercise-entry point-wrong-type-msg)
             (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "score not >= 0")
             (check-synobj-satisfies (λ (score) (<= score current-max-score))
