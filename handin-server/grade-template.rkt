@@ -42,9 +42,7 @@
         [(d p)
          (and
           (check-synobj-satisfies string? #'d 'exercise-entry "description not string")
-          (check-synobj-satisfies (λ (descr-tested) (or (and (string-prefix? current-description "Feedback")
-                                                             (string-prefix? descr-tested current-description))
-                                                        (string=? descr-tested current-description)))
+          (check-synobj-satisfies (λ (descr-tested) (string=? descr-tested current-description))
                                   #'d
                                   'exercise-entry
                                   "description doesn't match template")
@@ -55,10 +53,10 @@
            ; Case for the feedback entries
            (and
             (string-prefix? (syntax->datum #'d) "Feedback")
-            (check-synobj-satisfies (λ (feed) (and (string? feed) (string=? feed "")))
+            (check-synobj-satisfies string?
                                     #'p
                                     'exercise-entry
-                                    "this should be an empty string: write your feedback after the colon in the line above"))
+                                    "feedback must be a string"))
            ; Case for the score entries
            ; Even in unfinished grade files, any numeric grades must be
            ; validated.
