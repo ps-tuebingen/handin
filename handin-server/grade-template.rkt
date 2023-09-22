@@ -42,7 +42,9 @@
         [(d p)
          (and
           (check-synobj-satisfies string? #'d 'exercise-entry "description not string")
-          (check-synobj-satisfies (λ (descr-tested) (string=? descr-tested current-description))
+          (check-synobj-satisfies (λ (descr-tested) (or (and (string=? (first (string-split current-description)) "Feedback")
+                                                             (string=? (first (string-split descr-tested)) "Feedback"))
+                                                        (string=? descr-tested current-description)))
                                   #'d
                                   'exercise-entry
                                   "description doesn't match template")
