@@ -191,7 +191,7 @@
 (define (handin-grade/details user hi)
   (let* ([dir (find-handin-entry hi user)]
          [grading-table (and dir
-                     (read-grading-table (build-path dir "grade.rktd")))])
+                             (read-grading-table (build-path dir "grade.rktd")))])
     (if (finished-grading-table? grading-table)
       (values (number->string (grading-table-total grading-table)) grading-table)
       (values (handin-grade user hi) #f))))
