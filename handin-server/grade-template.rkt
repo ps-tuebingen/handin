@@ -50,15 +50,26 @@
            ; Allow symbols in unfinished grade files (see
            ; https://github.com/ps-tuebingen/info1-teaching-material/issues/92).
            (and (not finished-grading) (symbol? (syntax->datum #'p)))
+           ; Case for the feedback entries
+           (and
+            (string=? (first (string-split (syntax->datum #'d))) "Feedback")
+            (check-synobj-satisfies (λ (feed) (string=? feed "")) #'p 'exercise-entry "this should be an empty string: write your feedback after the colon in the line above"))
+           ; Case for the score entries
            ; Even in unfinished grade files, any numeric grades must be
            ; validated.
            (and
+            (string=? (first (string-split (syntax->datum #'d))) "Bewertung")
             (check-synobj-satisfies exact-integer? #'p 'exercise-entry point-wrong-type-msg)
             (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "score not >= 0")
             (check-synobj-satisfies (λ (score) (<= score current-max-score))
                                     #'p
                                     'exercise-entry
-                                    "overly high score on exercise"))))]))))
+                                    "overly high score on exercise"))
+           ; Case for the bullet point entries
+           (check-synobj-satisfies (λ (bullet) (or (symbol=? bullet '-) (symbol=? bullet 'o) (symbol=? bullet '+)))
+                                   #'p
+                                   'exercise-entry
+                                   "bullet points must be rated with -, o or +")))]))))
 
 ; Check if the passed grading-finished entry marks the file as complete.
 (define-for-syntax (grading-finished? stx)
@@ -90,11 +101,12 @@
                           'grading-finished-entry
                           "key of the first entry should be 'grading-finished"))
 
-(define-for-syntax EXPECTED-TOTAL-SCORE 100)
+(define-for-syntax EXPECTED-TOTAL-SCORE1 6)
+(define-for-syntax EXPECTED-TOTAL-SCORE2 8)
 (define-for-syntax (validate-total-scores max-scores)
-  (when (not (= (apply + max-scores) 100))
+  (when (not (or (= (apply + max-scores) EXPECTED-TOTAL-SCORE1) (= (apply + max-scores) EXPECTED-TOTAL-SCORE2)))
     ; What should the source location be?
-    (raise-syntax-error 'top-level (~a "total score is not " EXPECTED-TOTAL-SCORE))))
+    (raise-syntax-error 'top-level (~a "total score is not " EXPECTED-TOTAL-SCORE1 " or " EXPECTED-TOTAL-SCORE2))))
 
 (define-for-syntax (grading-finished-checker stx #:is-template is-template)
   (syntax-case stx ()
