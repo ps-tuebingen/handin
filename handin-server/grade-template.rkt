@@ -55,7 +55,7 @@
            ; Case for the feedback entries
            (and
             (string=? (first (string-split (syntax->datum #'d))) "Feedback")
-            (check-synobj-satisfies (λ (feed) (string=? feed "")) #'p 'exercise-entry "this should be an empty string: write your feedback after the colon in the line above"))
+            (check-synobj-satisfies (λ (feed) (and (string? feed) (string=? feed ""))) #'p 'exercise-entry "this should be an empty string: write your feedback after the colon in the line above"))
            ; Case for the score entries
            ; Even in unfinished grade files, any numeric grades must be
            ; validated.
@@ -68,7 +68,7 @@
                                     'exercise-entry
                                     "overly high score on exercise"))
            ; Case for the bullet point entries
-           (check-synobj-satisfies (λ (bullet) (or (symbol=? bullet '-) (symbol=? bullet 'o) (symbol=? bullet '+)))
+           (check-synobj-satisfies (λ (bullet) (and (symbol? bullet) (or (symbol=? bullet '-) (symbol=? bullet 'o) (symbol=? bullet '+))))
                                    #'p
                                    'exercise-entry
                                    "bullet points must be rated with -, o or +")))]))))
