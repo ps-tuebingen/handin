@@ -27,52 +27,74 @@
 (define-for-syntax (check-synobj-satisfies pred synob source errstr)
   (check-satisfies (λ (synob) (pred (syntax->datum synob))) synob source errstr))
 
+
+; SyntaxObject (U Symbol #f) String -> Boolean
+; Test whether given description is valid.
+(define-for-syntax (valid-description? synd current-description)
+  (and
+    (check-synobj-satisfies string? synd 'exercise-entry "description not string")
+    (check-synobj-satisfies (λ (descr-tested) (string=? descr-tested current-description))
+                            synd
+                            'exercise-entry
+                            "description doesn't match template")))
+
+; SyntaxObject SyntaxObject (U Symbol #f) -> Boolean
+; Check whether syntax objects constitute valid feedback entry.
+(define-for-syntax (valid-feedback? synd synp)
+  (and
+    (string-prefix? (syntax->datum synd) "Feedback")
+    (check-synobj-satisfies string?
+                            synp
+                            'exercise-entry
+                            "feedback must be a string")))
+
+; SyntaxObject SyntaxObject (U Symbol #f) Number -> Boolean
+; Check whether syntax objects constitute valid score entry.
+(define-for-syntax (valid-score? synd synp current-max-score)
+  (and
+    (string-prefix? (syntax->datum synd) "Bewertung")
+    (check-synobj-satisfies exact-integer? synp 'exercise-entry "score must be an integer")
+    (check-synobj-satisfies exact-nonnegative-integer? synp 'exercise-entry "score not >= 0")
+    (check-synobj-satisfies (λ (score) (<= score current-max-score))
+                            synp
+                            'exercise-entry
+                            "overly high score on exercise")))
+
+; Datum -> Boolean
+; Check whether Datum is valid bullet symbol.
+(define-for-syntax (bullet-symbol? bullet)
+  (and
+    (symbol? bullet)
+    (or (symbol=? bullet '-)
+        (symbol=? bullet 'o)
+        (symbol=? bullet '+))))
+
+; SyntaxObject (U Symbol #f) -> Boolean
+; Check whether syntax object constitutes valid bullet entry.
+(define-for-syntax (valid-bullet? synp)
+  (check-synobj-satisfies bullet-symbol?
+                          synp
+                          'exercise-entry
+                          "bullet must be -, o or +"))
+
 ; (List-Of String) (List-Of Number) Boolean -> (SyntaxObject Number -> Boolean)
 ; Validate a grading entry in a student file (described by stx) according to the
 ; i-th entry of the grading template (as described in lists descriptions and max-scores).
 (define-for-syntax (check-exercise descriptions max-scores finished-grading)
   (lambda (stx i)
     (let ([current-description (list-ref descriptions i)]
-          [current-max-score (list-ref max-scores i)]
-          [point-wrong-type-msg
-           (if finished-grading
-               "score not integer"
-               "score not integer or symbol")])
+          [current-max-score (list-ref max-scores i)])
       (syntax-case stx ()
         [(d p)
          (and
-          (check-synobj-satisfies string? #'d 'exercise-entry "description not string")
-          (check-synobj-satisfies (λ (descr-tested) (string=? descr-tested current-description))
-                                  #'d
-                                  'exercise-entry
-                                  "description doesn't match template")
+          (valid-description? #'d current-description)
           (or
-           ; Allow symbols in unfinished grade files (see
-           ; https://github.com/ps-tuebingen/info1-teaching-material/issues/92).
-           (and (not finished-grading) (symbol? (syntax->datum #'p)))
-           ; Case for the feedback entries
-           (and
-            (string-prefix? (syntax->datum #'d) "Feedback")
-            (check-synobj-satisfies string?
-                                    #'p
-                                    'exercise-entry
-                                    "feedback must be a string"))
-           ; Case for the score entries
-           ; Even in unfinished grade files, any numeric grades must be
-           ; validated.
-           (and
-            (string-prefix? (syntax->datum #'d) "Bewertung")
-            (check-synobj-satisfies exact-integer? #'p 'exercise-entry point-wrong-type-msg)
-            (check-synobj-satisfies exact-nonnegative-integer? #'p 'exercise-entry "score not >= 0")
-            (check-synobj-satisfies (λ (score) (<= score current-max-score))
-                                    #'p
-                                    'exercise-entry
-                                    "overly high score on exercise"))
-           ; Case for the bullet point entries
-           (check-synobj-satisfies (λ (bullet) (and (symbol? bullet) (or (symbol=? bullet '-) (symbol=? bullet 'o) (symbol=? bullet '+))))
-                                   #'p
-                                   'exercise-entry
-                                   "bullet points must be rated with -, o or +")))]))))
+            ; Allow symbols in unfinished grade files
+            ; (see https://github.com/ps-tuebingen/info1-teaching-material/issues/92).
+            (and (not finished-grading) (symbol? (syntax->datum #'p)))
+            (valid-feedback? #'d #'p)
+            (valid-score? #'d #'p current-max-score)
+            (valid-bullet? #'p)))]))))
 
 ; Check if the passed grading-finished entry marks the file as complete.
 (define-for-syntax (grading-finished? stx)
@@ -104,6 +126,7 @@
                           'grading-finished-entry
                           "key of the first entry should be 'grading-finished"))
 
+; every exercise is now 2 points max and there may be 3 or 4 on a homework
 (define-for-syntax EXPECTED-TOTAL-SCORE1 6)
 (define-for-syntax EXPECTED-TOTAL-SCORE2 8)
 (define-for-syntax (validate-total-scores max-scores)
