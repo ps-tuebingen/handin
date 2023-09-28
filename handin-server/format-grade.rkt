@@ -9,9 +9,11 @@
 ;; A GradingTable is the result of reading a `grade.rktd`-like file.
 ;; A ValidGradingTable is a list of entries, represented as two-element lists. For each entry:
 ;;   1. Either the first element is symbol 'grading-finished and the second is a boolean.
-;;   2. Or the first element is a string and the second is a number.
-;; Moreover, exactly one 'grading-finished entry must be present.
-;; (We currently don't require that entry to be the first; requiring that would simplify the code a lot).
+;;   2. Or the first element is a symbol 'score and the second is a number.
+;;   3. Or the first element is a string starting with "Feedback" and the second is a string, too.
+;;   4. Or the first element is a string not starting with "Feedback" and the second is one of the symbols + o -.
+;; Moreover, exactly one 'grading-finished entry and exactly one 'score entry must be present.
+;; (We currently don't require specific posiitons fo those entries; requiring that would simplify the code a bit).
 ;; A FinishedGradingTable is ValidGradingTable where the grading-finished entry is true.
 ;;
 ;; Tutors should ensure that grading tables are only finished (according to the above definition of FinishedGradingTable)
@@ -45,24 +47,28 @@
        (symbol=? (first entry) 'grading-finished)
        (boolean? (second entry))))
 
+(define (score-entry? entry)
+  (and (symbol? (first entry))
+       (symbol=? (first entry) 'score)
+       (number? (second entry))))
+
 (define (feedback-entry? entry)
   (and (string? (first entry))
        (string-prefix? (first entry) "Feedback")
        (string? (second entry))))
 
-(define (score-entry? entry)
-  (and (string? (first entry))
-       (string-prefix? (first entry) "Bewertung")
-       (number? (second entry))))
-
 (define (bullet-entry? entry)
   (and (string? (first entry))
+       (not (string-prefix? (first entry) "Feedback"))
        (symbol? (second entry))
        (let ([bullet (second entry)])
          (or (symbol=? bullet '-) (symbol=? bullet 'o) (symbol=? bullet '+)))))
 
 (define (single-well-formed-grading-finished-entry? entries)
   (= 1 (length (filter grading-finished-entry? entries))))
+
+(define (single-well-formed-score-entry? entries)
+  (= 1 (length (filter score-entry? entries))))
 
 ; Any -> Boolean
 ; Tests whether entries is a ValidGradingTable.
@@ -71,11 +77,12 @@
        (for/and ([entry (in-list entries)])
          (and (list? entry)
               (equal? (length entry) 2)
-              (or (score-entry? entry)
-                  (feedback-entry? entry)
+              (or (feedback-entry? entry)
                   (bullet-entry? entry)
+                  (score-entry? entry)
                   (grading-finished-entry? entry))
-              (single-well-formed-grading-finished-entry? entries)))))
+              (single-well-formed-grading-finished-entry? entries)
+              (single-well-formed-score-entry? entries)))))
 
 ; GradingTable -> Bool
 (define (erroneous-grading-table? entries)
@@ -105,11 +112,8 @@
                                [(string-prefix? descr "Feedback")
                                  (list
                                   `(td "")
-                                  `(td ,(string-append descr ": " rating)))]
-                               [(string-prefix? descr "Bewertung")
-                                 (list
-                                  `(td ,(number->string rating))
-                                  `(td (b ,(identity descr))))]
+                                  `(td (b ,(string-append descr ": "))
+                                       ,(identity rating)))]
                                [else
                                  (list
                                   `(td ,(symbol->string rating))
@@ -120,8 +124,8 @@
 ;; compute total grade based on filled grading table
 (define (grading-table-total entries)
   (for/sum ([entry (in-list entries)]
-            #:when (and (string? (first entry))
-                        (string-prefix? (first entry) "Bewertung")))
+            #:when (and (symbol? (first entry))
+                        (symbol=? (first entry) 'score)))
     (second entry)))
 
 ;; compute total grade from filename of the .rktd file
@@ -137,6 +141,7 @@
   (require rackunit)
   (check-false (finished-grading-table?
                  '([grading-finished #false]
+                   [score 1]
                    ["TASK-1-A got the right result" TASK-1-A-CORRECT-RES]
                    ["TASK-1-B got the right result" TASK-1-B-CORRECT-RES]
                    ["TASK-1-C got the right result" TASK-1-C-CORRECT-RES]
@@ -145,56 +150,69 @@
                    ["TASK-2-A got the right result" TASK-1-E-CORRECT-RES])))
   (check-false  (finished-grading-table?
                  '([grading-finished #t]
-                   ["TASK-1-A got the right result" '+]
+                   [score 0]
+                   ["TASK-1-A got the right result" +]
                    ["TASK-1-B got the right result" TASK-1-B-CORRECT-RES])))
   (check-true   (finished-grading-table?
                  '([grading-finished #t]
-                   ["TASK-1-A got the right result" '-]
-                   ["TASK-1-B got the right result" 'o])))
+                   [score 0]
+                   ["TASK-1-A got the right result" -]
+                   ["TASK-1-B got the right result" o])))
   (check-true   (valid-grading-table?
                  '([grading-finished #f]
-                   ["TASK-1-A got the right result" '+]
-                   ["TASK-1-B got the right result" '-])))
+                   [score 2]
+                   ["TASK-1-A got the right result" +]
+                   ["TASK-1-B got the right result" -])))
   (check-false  (finished-grading-table?
                  '([grading-finished #t]
-                   ["TASK-1-A got the right result" '+]
+                   [score 2]
+                   ["TASK-1-A got the right result" +]
                    ; The second `42` is outside of the string!
-                   ["TASK-2-E: Genauer gesagt, hätte 42 ein String sein müssen. Also als "42" geschrieben werden." '-])))
+                   ["TASK-2-E: Genauer gesagt, hätte 42 ein String sein müssen. Also als "42" geschrieben werden." -])))
   (check-false  (valid-grading-table?
                  '([grading-finished #t]
-                   ["TASK-1-A got the right result" 'o]
-                   ["TASK-1-B got the right result" '+]
+                   [score 2]
+                   ["TASK-1-A got the right result" o]
+                   ["TASK-1-B got the right result" +]
                    [grading-finished #t])))
   (check-false  (valid-grading-table?
-                 '(["TASK-1-A got the right result" '+]
-                   ["TASK-1-B got the right result" '-])))
+                 '([score 1]
+                   ["TASK-1-A got the right result" +]
+                   ["TASK-1-B got the right result" -])))
+  (check-false  (valid-grading-table?
+                 '([grading-finished #t]
+                   [score 2]
+                   ["TASK-1-A got the right result" o]
+                   ["TASK-1-B got the right result" +]
+                   [score 1])))
+  (check-false  (valid-grading-table?
+                 '([grading-finished #t]
+                   ["TASK-1-A got the right result" +]
+                   ["TASK-1-B got the right result" -])))
   (check-true   (valid-grading-table?
                  '([grading-finished #t]
-                   ["TASK-1-A got the right result" '+]
-                   ["TASK-1-B got the right result" '-]
-                   ["Bewertung Aufgabe 1" 2])))
+                   [score 0]
+                   ["TASK-1-A got the right result" +]
+                   ["TASK-1-B got the right result" -])))
   (check-false   (valid-grading-table?
                  '([grading-finished #t]
-                   ["TASK-1-A got the right result" '+]
-                   ["TASK-1-B got the right result" '-]
-                   ["Bewertung Aufgabe 1" nicht-automatisch-bewertet])))
+                   [score nicht-automatisch-bewertet]
+                   ["TASK-1-A got the right result" +]
+                   ["TASK-1-B got the right result" -])))
   (check-true   (valid-grading-table?
                  '([grading-finished #f]
-                   ["TASK-1-A got the right result" '+]
-                   ["TASK-1-B got the right result" '-]
-                   ["Bewertung Aufgabe 1" nicht-automatisch-bewertet])))
+                   [score 2]
+                   ["TASK-1-A got the right result" +]
+                   ["TASK-1-B got the right result" -])))
   (check-true   (valid-grading-table?
                  '([grading-finished #t]
-                   ["TASK-1-A got the right result" '+]
-                   ["TASK-1-B got the right result" '-]
-                   ["Feedback Aufgabe 1: Bei TASK-1-B gab es Probleme." ""])))
+                   [score 0]
+                   ["TASK-1-A got the right result" +]
+                   ["TASK-1-B got the right result" -]
+                   ["Feedback Aufgabe 1" "Bei TASK-1-B gab es Probleme."])))
   (check-false   (valid-grading-table?
                  '([grading-finished #t]
-                   ["TASK-1-A got the right result" '+]
-                   ["TASK-1-B got the right result" '-]
-                   ["Feedback Aufgabe 1" nicht-automatisch-bewertet])))
-  (check-true   (valid-grading-table?
-                 '([grading-finished #f]
-                   ["TASK-1-A got the right result" '+]
-                   ["TASK-1-B got the right result" '-]
+                   [score 2]
+                   ["TASK-1-A got the right result" +]
+                   ["TASK-1-B got the right result" -]
                    ["Feedback Aufgabe 1" nicht-automatisch-bewertet]))))
