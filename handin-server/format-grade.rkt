@@ -113,7 +113,7 @@
                                  (list
                                   `(td "")
                                   `(td (b ,(string-append descr ": "))
-                                       ,(identity rating)))]
+                                       ,@(add-between (string-split rating "\n") `(br))))]
                                [else
                                  (list
                                   `(td ,(symbol->string rating))
