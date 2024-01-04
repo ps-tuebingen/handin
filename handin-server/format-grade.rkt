@@ -102,22 +102,24 @@
 ;; convert filled grading table to definition list xexpr
 (define (format-grading-table entries)
   (if (list? entries)
-    `((table ([class "grading-table"])
-       ,@(for/list
-                   ([entry (in-list entries)]
-                    #:when (string? (first entry)))
-                    `(tr ,@(let ([descr (first entry)]
-                                 [rating (second entry)])
-                             (cond
-                               [(string-prefix? descr "Feedback")
-                                 (list
-                                  `(td "")
-                                  `(td (b ,(string-append descr ": "))
-                                       ,@(add-between (string-split rating "\n") `(br))))]
-                               [else
-                                 (list
-                                  `(td ,(symbol->string rating))
-                                  `(td ,(identity descr)))]))))))
+    `((details
+       (summary "Feedback")
+       (table ([class "grading-table"])
+         ,@(for/list
+                     ([entry (in-list entries)]
+                      #:when (string? (first entry)))
+                      `(tr ,@(let ([descr (first entry)]
+                                   [rating (second entry)])
+                               (cond
+                                 [(string-prefix? descr "Feedback")
+                                   (list
+                                    `(td "")
+                                    `(td (b ,(string-append descr ": "))
+                                         ,@(add-between (string-split rating "\n") `(br))))]
+                                 [else
+                                   (list
+                                    `(td ,(symbol->string rating))
+                                    `(td ,(identity descr)))])))))))
     `()))
 
 ; FinishedGradingTable -> Grade
