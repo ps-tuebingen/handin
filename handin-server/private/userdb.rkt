@@ -90,12 +90,12 @@
 (define (to-ruby-boolean bool)
   (if bool "true" "false"))
 
-;; fetch user database of discourse
-(define get-user-data/discourse
+;; fetch user from database of discourse
+(define (get-user-data/discourse user)
   (let* ([fetch-data
           (lambda ()
             (let* ([allow-staff (to-ruby-boolean (get-conf 'discourse-auth-staff))]
-                   [response (discourse-req "/admin/course/dump.json" #:get-params `((staff . ,allow-staff)))]
+                   [response (discourse-req "/admin/course/dump.json" #:get-params `((staff . ,allow-staff) (user . ,user)))]
                    [users (and response
                                (hash-ref response 'success #f)
                                (hash-ref response 'users))])
@@ -107,8 +107,7 @@
                                     (hash-ref user (string->symbol (car extra-field)))))))
                   (hash))))]
          [data (cached 2000.0 fetch-data)])
-    (lambda (username)
-      (hash-ref (data) username #f))))
+    (hash-ref (data) user #f)))
 
 ;; authenticate username/password with discourse
 ;; Discourse itself is case-insensitive.
