@@ -219,8 +219,8 @@
     `(tr ([class ,(if active? "active" "inactive")])
        (th ([scope "row"]) ,hi)
        (td ,(handin-link k user hi upload-suffixes)
-           ,@(format-grading-table details))
-       (td ,grade))))
+           ,@(format-grading-table details)))))
+       ;;(td ,grade))))
 
 (define (format-tutor-group-field tutor-group)
   (or (with-handlers
@@ -267,7 +267,7 @@ Ort:  Raum VB N3, Morgenstelle")
               formatted-tutor-group
               `(h2 "Abgaben")
               `(table ([class "submissions"])
-                 (thead (tr (th "Aufgabenblatt") (th "Abgegebene Dateien") (th "Punkte")))
+                 (thead (tr (th "Aufgabenblatt") (th "Abgegebene Dateien"))) ;;(th "Punkte")))
                  (tbody ,@(append (map (row k #t upload-suffixes) (get-conf 'active-dirs))
                            (map (row k #f #f) (get-conf 'inactive-dirs))))))))])
     (handle-status-request user next upload-suffixes)))

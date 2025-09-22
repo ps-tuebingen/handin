@@ -12,8 +12,8 @@
 ;;   2. Or the first element is a symbol 'score and the second is a number.
 ;;   3. Or the first element is a string starting with "Feedback" and the second is a string, too.
 ;;   4. Or the first element is a string not starting with "Feedback" and the second is one of the symbols + o -.
-;; Moreover, exactly one 'grading-finished entry and exactly one 'score entry must be present.
-;; (We currently don't require specific posiitons fo those entries; requiring that would simplify the code a bit).
+;; Moreover, exactly one 'grading-finished entry and exactly one 'score entry (which we currently do not use) must be present.
+;; (We currently don't require specific positions of those entries; requiring that would simplify the code a bit).
 ;; A FinishedGradingTable is ValidGradingTable where the grading-finished entry is true.
 ;;
 ;; Tutors should ensure that grading tables are only finished (according to the above definition of FinishedGradingTable)
