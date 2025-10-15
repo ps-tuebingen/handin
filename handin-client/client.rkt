@@ -33,13 +33,14 @@
 
 ;; ssl connection, makes a readable error message if no connection
 (define (connect-to server port [cert #f])
-  (define pem (or cert (in-this-collection "server-cert.pem")))
+  ;(define pem (or cert (in-this-collection "server-cert.pem")))
   (define ctx (ssl-make-client-context))
   (ssl-try-verify! ctx #t)
   (ssl-load-default-verify-sources! ctx)
-  (if (file-exists? pem)
-      (ssl-load-verify-root-certificates! ctx pem)
-      (ssl-set-verify-hostname! ctx #t))
+  ;(if (file-exists? pem)
+  ;    (ssl-load-verify-root-certificates! ctx pem)
+  ;    (ssl-set-verify-hostname! ctx #t))
+  (ssl-set-verify-hostname! ctx #t)
   (with-handlers
       ([exn:fail:network?
         (lambda (e)
