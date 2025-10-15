@@ -205,17 +205,18 @@
     (delete-file target))
   (copy "icon for toolbar button" source target))
 
-; Copy SSL certificate to collection
-(let* ([file "server-cert.pem"]
-       [source (build-path conf-dir file)]
-       [target (build-path collection-dir file)])
-  (copy "SSL certificate" source target)
-
-  ; Append root certificate
-  (let* ([root-cert-file "root-cert.pem"]
-         [root-cert-source (build-path conf-dir root-cert-file)])
-    (when (file-exists? root-cert-source)
-      (append-file "SSL root certificate" root-cert-source target))))
+; We have a properly signed certificate and hence do not distribute it with the client.
+;; Copy SSL certificate to collection
+;(let* ([file "server-cert.pem"]
+;       [source (build-path conf-dir file)]
+;       [target (build-path collection-dir file)])
+;  (copy "SSL certificate" source target)
+;
+;  ; Append root certificate
+;  (let* ([root-cert-file "root-cert.pem"]
+;         [root-cert-source (build-path conf-dir root-cert-file)])
+;    (when (file-exists? root-cert-source)
+;      (append-file "SSL root certificate" root-cert-source target))))
 
 ; Delete compiled code, because it was invalidated by changing the package name.
 ; Testing in local-mode shows that Racket won't recognize the problem.
